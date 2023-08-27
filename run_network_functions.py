@@ -1,10 +1,13 @@
 from brian2 import *
 from brian2.importexport import DictImportExport
+from brian2.devices.device import seed
 
 
 
 def run_FS_network(neuron_params, plasticity_params, simulation_params):
   start_scope()
+
+  seed(simulation_params["seed"])
 
   N_pre_exc = simulation_params["N_pre"]
   N_pre_inh = 0.2*simulation_params["N_pre"]
@@ -127,7 +130,7 @@ def run_FS_network(neuron_params, plasticity_params, simulation_params):
                         ''',
                 on_post='''
                         z_minus += 1
-                        w += (1 - w) * lmbda * z_3 * z_plus
+                        w += lmbda * z_3 * z_plus
                         w = clip(w, 0, w0_plus)
                         '''
                 )

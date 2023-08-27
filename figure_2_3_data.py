@@ -9,9 +9,8 @@ import matplotlib.cm as cm
 from matplotlib.colors import LinearSegmentedColormap
 import seaborn as sns
 
-from aux import c_timed_array, get_zero_current
-#from run_network_functions import run_FS_network
-from run_network_functions_mult import run_FS_network
+from aux import c_timed_array, get_zero_current, get_vm_corr
+from run_network_functions import run_FS_network
 
 from sys import exit
 
@@ -21,25 +20,18 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 from sklearn.feature_selection import r_regression
 
-from scipy.stats import vonmises
 from scipy.stats import pearsonr
 
 
 
 def save_results(results_list, filename):
     results = {}
-    results["w_trajs"], results["filo_num"], results["filo_mu"], results["filo_sgm"], results["spine_num"], results["spine_mu"], results["spine_sgm"], results["cw_slope"], results["corr"] = [], [], [], [], [], [], [], [], []
+    results["RF"], results["corr"], results["DI"] = [], [], []
 
-    for w_trajs, filo_num, filo_mu, filo_sgm, spine_num, spine_mu, spine_sgm, cw_slope, corr in results_list:
-        results["w_trajs"].append(w_trajs)
-        results["filo_num"].append(filo_num)
-        results["filo_mu"].append(filo_mu)
-        results["filo_sgm"].append(filo_sgm)
-        results["spine_num"].append(spine_num)
-        results["spine_mu"].append(spine_mu)
-        results["spine_sgm"].append(spine_sgm)
-        results["cw_slope"].append(cw_slope)
+    for RF, corr, DI in results_list:
+        results["RF"].append(RF)
         results["corr"].append(corr)
+        results["DI"].append(DI)
 
     with open('Data/{}'.format(filename), 'wb') as handle:
         pickle.dump(dict(results), handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -107,58 +99,62 @@ def get_RF_DI(neuron_params, plasticity_params, simulation_params, w, c_0):
 
 def get_RF_stats(params):
 
-    neuron_params, plasticity_params, simulation_params, alpha, c_tot, get_DI, return_trajs = params
+    neuron_params, plasticity_params, simulation_params, alpha, c_tot, num_seeds = params
 
-    plasticity_params["alpha"] = alpha
-    kappa = 8
 
-    patterns = []
-    current_time = 0*second
-    max_time = 200*second
-    pattern = {}
-    pattern["start_time"] = current_time
-    pattern["duration"] = max_time
-    pattern["c"] = get_vm_corr(0, kappa, c_tot)
-    patterns.append(pattern)
-    current_time += pattern["duration"]
+    for seed in range(num_seeds):
+        simulation_params["seed"] = seed
 
-    simulation_params["total_time"] = current_time
-    simulation_params["c"] = c_timed_array(patterns, simulation_params)
-    simulation_params["I_ext"] = get_zero_current(simulation_params, 0)
+        plasticity_params["alpha"] = alpha
+        kappa = 8
 
-    spike_ref_mon, spike_pre_mon, spike_post_mon, w_trajs, post_mon, mu_trajs = run_FS_network(neuron_params, plasticity_params, simulation_params)
-    del simulation_params["c"], simulation_params["I_ext"]
+        patterns = []
+        current_time = 0*second
+        max_time = 200*second
+        pattern = {}
+        pattern["start_time"] = current_time
+        pattern["duration"] = max_time
+        pattern["c"] = get_vm_corr(0, kappa, c_tot)
+        patterns.append(pattern)
+        current_time += pattern["duration"]
 
-    c = patterns[0]["c"]
-    w = np.mean(w_trajs[:, -10:], axis=1)
+        simulation_params["total_time"] = current_time
+        simulation_params["c"] = c_timed_array(patterns, simulation_params)
+        simulation_params["I_ext"] = get_zero_current(simulation_params, 0)
 
-    filo_index = np.where(w < plasticity_params["w0_minus"])[0]
-    spine_index = np.where(w >= plasticity_params["w0_minus"])[0]
+        spike_ref_mon, spike_pre_mon, spike_post_mon, w_trajs, post_mon, mu_trajs = run_FS_network(neuron_params, plasticity_params, simulation_params)
+        del simulation_params["c"], simulation_params["I_ext"]
 
-    w_filo = w[filo_index]
-    w_spine = w[spine_index]
+        c = patterns[0]["c"]
+        w = np.mean(w_trajs[:, -10:], axis=1)
 
-    filo_num, filo_mu, filo_sgm = len(w_filo), np.mean(w_filo), np.std(w_filo)
-    spine_num, spine_mu, spine_sgm = len(w_spine), np.mean(w_spine), np.std(w_spine)
+        filo_index = np.where(w < plasticity_params["w0_minus"])[0]
+        spine_index = np.where(w >= plasticity_params["w0_minus"])[0]
 
-    try:
-      corr = pearsonr(c[spine_index], w_spine).statistic
-    except:
-      corr = 0
+        w_filo = w[filo_index]
+        w_spine = w[spine_index]
 
-    if get_DI:
+        filo_num, filo_mu, filo_sgm = len(w_filo), np.mean(w_filo), np.std(w_filo)
+        spine_num, spine_mu, spine_sgm = len(w_spine), np.mean(w_spine), np.std(w_spine)
 
-      r_DI = 15*Hz
-      simulation_params["r_pre"] = r_DI
-      frs, DI, y_0 = get_RF_DI(neuron_params, plasticity_params, simulation_params, w, c)
+        try:
+            corr = pearsonr(c[spine_index], w_spine).statistic
+        except:
+            corr = 0
 
-    else:
-       DI = 0
+        r_DI = 15*Hz
+        simulation_params["r_pre"] = r_DI
+        frs, DI, y_0 = get_RF_DI(neuron_params, plasticity_params, simulation_params, w, c)
 
-    if return_trajs:
-       return w_trajs, filo_num, filo_mu, filo_sgm, spine_num, spine_mu, spine_sgm, DI, corr
-    else:
-      return filo_num, filo_mu, filo_sgm, spine_num, spine_mu, spine_sgm, DI, corr
+        try:
+            corr_av += corr
+            DI_av += DI
+
+        except:
+            corr_av = corr
+            DI_av = DI
+
+    return  w, corr_av/num_seeds, DI_av/num_seeds
 
 
 
@@ -182,6 +178,7 @@ if __name__ == '__main__':
     plasticity_params = {}
     plasticity_params["add"] = 0
     plasticity_params["mult"] = 0
+    plasticity_params["a"] = 0
     plasticity_params["q"] = 8
     plasticity_params["mu_plus"] = 0
     plasticity_params["mu_minus"] = 0
@@ -205,7 +202,12 @@ if __name__ == '__main__':
     simulation_params["N_post"] = 1
     simulation_params["class_pools"] = False
     simulation_params["w"] = 0.3
+    simulation_params["seed"] = 0
 
+
+    #########################################################
+    #simulate RF formation with von Mises shaped correlations
+    #########################################################
     
     c_tot = 60
     kappa = 8
@@ -237,6 +239,10 @@ if __name__ == '__main__':
     spine_index = np.where(w_FS >= plasticity_params["w0_minus"])[0]
 
 
+    #########################################################
+    # correlation vs final weight curve
+    #########################################################
+
     results = {}
     results["c"] = c
     results["w_FS"] = w_FS
@@ -245,6 +251,12 @@ if __name__ == '__main__':
 
     with open("Data/figure_2B.pickle", 'wb') as handle:
         pickle.dump(dict(results), handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+    #########################################################
+    # discrimination index
+    #########################################################
+
     simulation_params["r_pre"] = 15*Hz
     FR_FS, DI_FS, y_0 = get_RF_DI(neuron_params, plasticity_params, simulation_params, w_FS, c)
 
@@ -255,7 +267,6 @@ if __name__ == '__main__':
     with open("Data/figure_2C.pickle", 'wb') as handle:
         pickle.dump(dict(results), handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-
     
     simulation_params["total_time"] =  A_duration
     simulation_params["r_pre"] = 30*Hz
@@ -263,6 +274,11 @@ if __name__ == '__main__':
     simulation_params["c"] = c_timed_array(patterns, simulation_params)
     simulation_params["I_ext"] = get_zero_current(simulation_params, 0)
     plasticity_params["lmbda"] = 0.006
+
+
+    ###########################################
+    # repeat simulations for add- and mult-STDP
+    ###########################################
 
 
     plasticity_params["add"] = 1
@@ -285,7 +301,12 @@ if __name__ == '__main__':
         pickle.dump(dict(results), handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-    #define network architecture and simulation specs
+    ##############################################################################
+    #parameter sweep across potentation/depression imbalance and total correlation
+    ##############################################################################
+
+    num_seeds = 5
+
     simulation_params = {}
     simulation_params["total_time"] = 150*second
     simulation_params["integration_dt"] = 0.5*ms
@@ -296,6 +317,7 @@ if __name__ == '__main__':
     simulation_params["N_post"] = 1
     simulation_params["class_pools"] = False
     simulation_params["w"] = 0.3
+    simulation_params["seed"] = 0
     plasticity_params["lmbda"] = 0.006
 
 
@@ -306,57 +328,23 @@ if __name__ == '__main__':
         spans[key]["range"] = np.linspace(value["min"], value["max"], value["num_values"])
     mesh = list(itertools.product(*[span["range"] for span in spans.values()]))
 
-
     plasticity_params["add"] = 0
     plasticity_params["mult"] = 0
-    experiment_params = [(neuron_params, plasticity_params, simulation_params, alpha, c_tot, True, True) for alpha, c_tot in mesh]
+    experiment_params = [(neuron_params, plasticity_params, simulation_params, alpha, c_tot, num_seeds) for alpha, c_tot in mesh]
     pool = multiprocessing.Pool(processes=128)
     results_list = pool.map(get_RF_stats, experiment_params)
     save_results(results_list, filename='figure_2FG_FS.pickle')
 
     plasticity_params["add"] = 1
     plasticity_params["mult"] = 0
-    experiment_params = [(neuron_params, plasticity_params, simulation_params, alpha, c_tot, True, True) for alpha, c_tot in mesh]
+    experiment_params = [(neuron_params, plasticity_params, simulation_params, alpha, c_tot, num_seeds) for alpha, c_tot in mesh]
     pool = multiprocessing.Pool(processes=128)
     results_list = pool.map(get_RF_stats, experiment_params)
     save_results(results_list, filename='figure_2FG_add.pickle')
 
     plasticity_params["add"] = 0
     plasticity_params["mult"] = 1
-    experiment_params = [(neuron_params, plasticity_params, simulation_params, alpha, c_tot, True, True) for alpha, c_tot in mesh]
+    experiment_params = [(neuron_params, plasticity_params, simulation_params, alpha, c_tot, num_seeds) for alpha, c_tot in mesh]
     pool = multiprocessing.Pool(processes=128)
     results_list = pool.map(get_RF_stats, experiment_params)
     save_results(results_list, filename='figure_2FG_mult.pickle')
-
-
-'''
-
-
-
-    spans = OrderedDict()
-    spans["alpha"] =  {"min": 1., "max": 1.75, "num_values": 10}
-    spans["c_tot"] =  {"min": 0., "max": 120 , "num_values": 10}
-    for key, value in spans.items():
-        spans[key]["range"] = np.linspace(value["min"], value["max"], value["num_values"])
-    mesh = list(itertools.product(*[span["range"] for span in spans.values()]))
-    
-    plasticity_params["add"] = 0
-    plasticity_params["mult"] = 0
-    experiment_params = [(neuron_params, plasticity_params, simulation_params, alpha, c_tot, r_DI, True) for alpha, c_tot, r_DI in mesh]
-    pool = multiprocessing.Pool(processes=128)
-    results_list = pool.map(get_RF_stats, experiment_params)
-
-
-    plasticity_params["add"] = 1
-    plasticity_params["mult"] = 0
-    experiment_params = [(neuron_params, plasticity_params, simulation_params, alpha,  c_tot, r_DI, True) for alpha, c_tot, r_DI in mesh]
-    pool = multiprocessing.Pool(processes=128)
-    results_list = pool.map(get_RF_stats, experiment_params)
-
-
-    plasticity_params["add"] = 0
-    plasticity_params["mult"] = 1
-    experiment_params = [(neuron_params, plasticity_params, simulation_params, alpha, c_tot, r_DI, True) for alpha, c_tot, r_DI in mesh]
-    pool = multiprocessing.Pool(processes=128)
-    results_list = pool.map(get_RF_stats, experiment_params)
-'''

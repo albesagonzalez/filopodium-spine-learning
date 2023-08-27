@@ -10,9 +10,7 @@ from matplotlib.colors import LinearSegmentedColormap
 import seaborn as sns
 from argparse import Namespace
 
-from aux import c_timed_array, get_zero_current
-#from run_network_functions import run_FS_network
-from run_network_functions_mult import run_FS_network
+from aux import c_timed_array, get_zero_current, get_vm_corr
 
 from sys import exit
 
@@ -58,7 +56,6 @@ def make_2A():
   for index, c_tot in enumerate([60, 120]):
     plt.plot(get_vm_corr(0, kappa=8, c_tot=c_tot), color = A_colour, alpha=(index/2+0.5))
   plt.xlabel(r"Neuron ID", fontsize=20)
-  #plt.xticks([0, 250, 500, 750, 1000], [r"$\theta_0-\pi$", r"$\theta_0-\pi/2$", r"$\theta_0$",  r"$\theta_0 +\pi/2$",  r"$\theta_0 +\pi$"], fontsize=18)
   plt.xticks([0, 250, 500, 750, 1000], [r"$-\pi$", r"$-\pi/2$", r"$0$",  r"$\pi/2$",  r"$\pi$"], fontsize=18)
   plt.ylabel(r"correlation $c_i$", fontsize=20)
   plt.yticks([0, 1], fontsize=18)
@@ -109,7 +106,7 @@ def make_2C(FR, y0):
   plt.xticks([0, 250, 500, 750, 1000], [r"$-\pi$", r"$-\pi/2$", r"$0$",  r"$\pi/2$",  r"$\pi$"], fontsize=18)
   plt.axhline(y0/Hz, xmax=0.5, linestyle='dashed', color='black')
   plt.text(s=r"$y_{pref}$", x=150, y=17, fontsize=22)
-  plt.xlabel(r"Neuron ID", fontsize=20)
+  plt.xlabel(r"Input centered at", fontsize=20)
   plt.ylabel(R"postsyn. activity $y_\theta$ (Hz)", fontsize=20)
   plt.yticks([0, 5, 10, 15, 20, 25], fontsize=20)
   sns.despine()
@@ -127,12 +124,14 @@ def make_2D(w_trajs_FS, w_trajs_add, w_trajs_mult):
     #plt.title(titles[index], fontsize=25)
     w_trajs = all_trajs[index]
     w = np.mean(w_trajs[:, 10:], axis=1)
+    filo_index = np.where(w < 0.5)[0]
     spine_index = np.where(w >= 0.5)[0]
     for w_traj in all_trajs[index]:
       plt.plot(w_traj, color=filo_colour, linewidth=0.1, alpha=0.1)
     for w_traj in all_trajs[index][spine_index]:
       plt.plot(w_traj, color=A_colour, linewidth=0.1, alpha=0.1)
     plt.plot(np.mean(w_trajs[spine_index], axis=0), color=A_colour, linewidth=5)
+    plt.plot(np.mean(w_trajs[filo_index], axis=0), color=filo_colour, linewidth=5)
     plt.xticks([0, 200, 400], fontsize=18)
     plt.xlabel(r"time (s)", fontsize=20)
     plt.yticks([0, 1], fontsize=18)   
@@ -164,24 +163,20 @@ def make_2E(w_trajs_FS, w_trajs_add, w_trajs_mult):
     plt.close()
 
 
-def make_2F(data_FS, data_add, data_mult):
+def make_3A(data_FS, data_add, data_mult):
   n = 10
   r_FS = np.nan_to_num(np.array(data_FS["corr"]).reshape((n, n)))
   r_add = np.nan_to_num(np.array(data_add["corr"]).reshape((n, n)))
   r_mult = np.nan_to_num(np.array(data_mult["corr"]).reshape((n, n)))
 
-  #all_r= [r_FS, r_FS - r_add, r_FS - r_mult, r_mult - r_add]
-  #titles = [r"$r_{FS}$", r"$r_{FS}- r_{add}$", r"$r_{FS} - r_{mult}$", r"$r_{mult} - r_{add}$"]
+
   all_r= [r_FS, r_FS - r_add, r_FS - r_mult]
-  #all_r= [r_FS, r_add, r_mult]
   titles = [r"$r_{FS}$", r"$r_{FS}- r_{add}$", r"$r_{FS} - r_{mult}$"]
   fig, axs = plt.subplots(1, 3, sharey='row', figsize=(20, 7))
   for index, ax in enumerate(axs):
     ax.set_title(titles[index], fontsize=30, pad=20)
     im = ax.imshow(all_r[index], vmin=-1, vmax=1, origin='lower', cmap=get_rg_cmap())
     ax.set_xlabel(r"total correlation $c_{tot}$", fontsize=20)
-    #ax.set_xticks([0, 9, 19, 29], [0, 40, 80, 120])
-    #ax.set_yticks([0, 9, 19, 29], [1., 1.25, r"1.5", 1.75])
     ax.set_xticks([0, 3, 6, 9], [0, 40, 80, 120])
     ax.set_yticks([0, 3, 6, 9], [1., 1.25, r"1.5", 1.75])
     ax.tick_params(axis='both', labelsize=18)       
@@ -192,35 +187,25 @@ def make_2F(data_FS, data_add, data_mult):
   cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
   cb = fig.colorbar(im, cax=cbar_ax, ticks=[-1, 0, 1])
   cb.ax.tick_params(labelsize=16)
-  plt.savefig('Figures/2/SVG/F.svg', dpi=300, transparent=True)
-  plt.savefig('Figures/2/PNG/F.png', dpi=300, transparent=True)
+  plt.savefig('Figures/3/SVG/F.svg', dpi=300, transparent=True)
+  plt.savefig('Figures/3/PNG/F.png', dpi=300, transparent=True)
   plt.close()
 
 
-def make_2G(data_FS, data_add, data_mult):
+def make_3B(data_FS, data_add, data_mult):
 
   n = 10
   DI_FS = np.nan_to_num(np.array(data_FS["DI"]).reshape((n, n)))
   DI_add = np.nan_to_num(np.array(data_add["DI"]).reshape((n, n)))
   DI_mult = np.nan_to_num(np.array(data_mult["DI"]).reshape((n, n)))
 
-
-  #all_DI = [DI_FS, DI_FS - DI_add, DI_FS - DI_mult, DI_add - DI_mult]
-  #titles = [r"$DI_{FS}$", r"$DI_{FS}- DI_{add}$", r"$DI_{FS} - DI_{mult}$", r"$DI_{add} - DI_{mult}$"]
   all_DI = [DI_FS, DI_FS - DI_add, DI_FS - DI_mult]
-  #all_DI = [DI_FS, DI_add, DI_mult]
   titles = [r"$DI_{FS}$", r"$DI_{FS}- DI_{add}$", r"$DI_{FS} - DI_{mult}$"]
   fig, axs = plt.subplots(1, 3, sharey='row', figsize=(20, 7))
   for index, ax in enumerate(axs):
     ax.set_title(titles[index], fontsize=30, pad=20)
     im = ax.imshow(all_DI[index], vmin=-1, vmax=1, origin='lower', cmap=get_rg_cmap())
-    #im = ax.imshow(all_DI[index], origin='lower')
-    #im = ax.imshow(all_DI[index], origin='lower')
-    #plt.colorbar(im, ax)
-    #plt.colorbar(im, ax)
     ax.set_xlabel(r"total correlation $c_{tot}$", fontsize=20)
-    #ax.set_xticks([0, 9, 19, 29], [0, 40, 80, 120])
-    #ax.set_yticks([0, 9, 19, 29], [1., 1.25, r"1.5", 1.75])
     ax.set_xticks([0, 3, 6, 9], [0, 40, 80, 120])
     ax.set_yticks([0, 3, 6, 9], [1., 1.25, r"1.5", 1.75])
     ax.tick_params(axis='both', labelsize=18)       
@@ -229,14 +214,12 @@ def make_2G(data_FS, data_add, data_mult):
       sns.despine()
 
   fig.subplots_adjust(right=0.8)
-  #cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
-  #fig.colorbar(im, cax=cbar_ax)
-  plt.savefig('Figures/2/SVG/G.svg', dpi=300, transparent=True)
-  plt.savefig('Figures/2/PNG/G.png', dpi=300, transparent=True)
+  plt.savefig('Figures/3/SVG/G.svg', dpi=300, transparent=True)
+  plt.savefig('Figures/3/PNG/G.png', dpi=300, transparent=True)
   plt.close()
 
 
-def make_2supp(data_FS, data_add, data_mult):
+def make_3supp(data_FS, data_add, data_mult):
   for rule, RFs in enumerate([data_FS["RF"], data_add["RF"], data_mult["RF"]]):
     N = int(np.sqrt(len(RFs)))
     fig, axs = plt.subplots(N, N, sharex='col', sharey='row')
@@ -256,8 +239,8 @@ def make_2supp(data_FS, data_add, data_mult):
     fig.text(0.04, 0.5, r'pot./dep. imbalance $\alpha$', va='center', rotation='vertical')
     fig.text(0.5, 0.04, r'total correlation $c_{tot}$', ha='center')
 
-    plt.savefig('Figures/2/SVG/supp3{}.svg'.format(rule+1), dpi=300, transparent=True)
-    plt.savefig('Figures/2/PNG/supp3{}.png'.format(rule+1), dpi=300, transparent=True)
+    plt.savefig('Figures/3/SVG/supp3{}.svg'.format(rule+1), dpi=300, transparent=True)
+    plt.savefig('Figures/3/PNG/supp3{}.png'.format(rule+1), dpi=300, transparent=True)
     plt.close()
     
 
@@ -333,18 +316,16 @@ if __name__ == '__main__':
     make_2E(w_trajs_FS, w_trajs_add, w_trajs_mult)
 
 
-    with open('Data/figure_2FG_FS.pickle', 'rb') as handle:
+    with open('Data/figure_3_FS.pickle', 'rb') as handle:
       data_FS = pickle.load(handle)
 
-    with open('Data/figure_2FG_add.pickle', 'rb') as handle:
+    with open('Data/figure_3_add.pickle', 'rb') as handle:
       data_add = pickle.load(handle)
 
-    with open('Data/figure_2FG_mult.pickle', 'rb') as handle:
+    with open('Data/figure_3_mult.pickle', 'rb') as handle:
       data_mult = pickle.load(handle)
 
 
-    make_2F(data_FS, data_add, data_mult)
-    make_2G(data_FS, data_add, data_mult)
-
-
-    make_2supp(data_FS, data_add, data_mult)
+    make_3A(data_FS, data_add, data_mult)
+    make_3B(data_FS, data_add, data_mult)
+    make_3supp(data_FS, data_add, data_mult)

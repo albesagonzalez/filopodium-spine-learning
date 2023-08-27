@@ -1,4 +1,5 @@
 from brian2 import *
+from scipy.stats import vonmises
 
 
 def generate_spike_trains(N, r, time, input_dt, **kwargs):
@@ -72,5 +73,10 @@ def get_dynamical_terms(w_trajs, mu_trajs, patterns, neuron_params, plasticity_p
   
   factor = plasticity_params["lmbda"]*neuron_params["tau_m"]*(simulation_params["r_pre"]**2)/simulation_params["N_pre"]
   return factor*competition, factor*cooperation
+
+def get_vm_corr(pref_deg, kappa, c_tot):
+   x = np.linspace(pi + pref_deg, -pi + pref_deg, 1000)
+   vm = vonmises(kappa=kappa)
+   return vm.pdf(x)/np.sum(vm.pdf(x))*c_tot
 
 

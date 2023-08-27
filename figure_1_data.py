@@ -6,7 +6,7 @@ import matplotlib.cm as cm
 import pickle
 
 from aux import c_timed_array, get_zero_current
-from run_network_functions_mult import run_FS_network
+from run_network_functions import run_FS_network
 
 
 if __name__ == "__main__":
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     plasticity_params["w0_plus"] = 1
     plasticity_params["lmbda"] = 0.006
     plasticity_params["w0_minus"] = 0.5
-    plasticity_params["alpha"] = 1.5
+    plasticity_params["alpha"] = 1.35
 
     #define network architecture and simulation specs
     simulation_params = {}
@@ -53,6 +53,7 @@ if __name__ == "__main__":
     simulation_params["N_post"] = 1
     simulation_params["class_pools"] = False
     simulation_params["w"] = 0.3
+    simulation_params["seed"] = 0
 
     c_mu = 0.15
     c_sigma = 0.1
