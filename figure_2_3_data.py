@@ -12,17 +12,10 @@ import seaborn as sns
 from aux import c_timed_array, get_zero_current, get_vm_corr
 from run_network_functions import run_FS_network
 
-from sys import exit
-
-from sklearn import preprocessing, svm
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import r2_score
-from sklearn.feature_selection import r_regression
-
 from scipy.stats import pearsonr
 
-
+from aux import make_data_dir
+make_data_dir()
 
 def save_results(results_list, filename):
     results = {}
@@ -35,11 +28,6 @@ def save_results(results_list, filename):
 
     with open('Data/{}'.format(filename), 'wb') as handle:
         pickle.dump(dict(results), handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-def get_vm_corr(pref_deg, kappa, c_tot):
-   x = np.linspace(pi + pref_deg, -pi + pref_deg, 1000)
-   vm = vonmises(kappa=kappa)
-   return vm.pdf(x)/np.sum(vm.pdf(x))*c_tot
 
 def get_RF_DI(neuron_params, plasticity_params, simulation_params, w, c_0):
     

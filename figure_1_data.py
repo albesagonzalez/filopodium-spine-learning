@@ -4,9 +4,13 @@ from brian2 import *
 
 import matplotlib.cm as cm
 import pickle
+import os
 
 from aux import c_timed_array, get_zero_current
 from run_network_functions import run_FS_network
+
+from aux import make_data_dir
+make_data_dir()
 
 
 if __name__ == "__main__":

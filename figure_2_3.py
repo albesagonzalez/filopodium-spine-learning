@@ -23,6 +23,12 @@ from sklearn.feature_selection import r_regression
 from scipy.stats import vonmises
 from scipy.stats import pearsonr
 
+
+from aux import make_fig_dirs
+make_fig_dirs(fig_num='2')
+make_fig_dirs(fig_num='3')
+
+
 coop_colour = plt.cm.tab20(6)
 comp_colour = plt.cm.tab20(0)
 red = plt.cm.tab20(6)

@@ -1,12 +1,10 @@
 import seaborn as sns
 
 from brian2 import *
-
-import matplotlib.cm as cm
 import pickle
 
-from aux import c_timed_array, get_zero_current
-
+from aux import make_fig_dirs
+make_fig_dirs(fig_num='1')
 
 coop_colour = plt.cm.tab20(6)
 comp_colour = plt.cm.tab20(0)

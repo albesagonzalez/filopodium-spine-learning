@@ -12,7 +12,8 @@ import seaborn as sns
 
 from aux import get_vm_corr
 
-from scipy.stats import vonmises
+from aux import make_fig_dirs
+make_fig_dirs(fig_num='4')
 
 coop_colour = plt.cm.tab20(6)
 comp_colour = plt.cm.tab20(0)

@@ -1,5 +1,6 @@
 from brian2 import *
 from scipy.stats import vonmises
+import os
 
 
 def generate_spike_trains(N, r, time, input_dt, **kwargs):
@@ -78,5 +79,27 @@ def get_vm_corr(pref_deg, kappa, c_tot):
    x = np.linspace(pi + pref_deg, -pi + pref_deg, 1000)
    vm = vonmises(kappa=kappa)
    return vm.pdf(x)/np.sum(vm.pdf(x))*c_tot
+
+
+def make_data_dir():
+  current_directory = os.getcwd()
+  final_directory = os.path.join(current_directory, r'Data')
+  if not os.path.exists(final_directory):
+      os.makedirs(final_directory)
+
+def make_fig_dirs(fig_num):
+  current_directory = os.getcwd()
+  final_directory = os.path.join(current_directory, r'Figures')
+  if not os.path.exists(final_directory):
+      os.makedirs(final_directory)
+  final_directory = os.path.join(final_directory, fig_num)
+  if not os.path.exists(final_directory):
+      os.makedirs(final_directory)
+  PNG_directory = os.path.join(final_directory, r'PNG')
+  if not os.path.exists(PNG_directory):
+      os.makedirs(PNG_directory)
+  SVG_directory = os.path.join(final_directory, r'SVG')
+  if not os.path.exists(SVG_directory):
+      os.makedirs(SVG_directory)
 
 
