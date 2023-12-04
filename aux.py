@@ -50,9 +50,18 @@ def get_zero_current(simulation_params, I_0):
 
 def get_dynamical_terms(w_trajs, mu_trajs, patterns, neuron_params, plasticity_params, simulation_params):
   def f_plus(w, mu, plasticity_params):
-    return np.abs(plasticity_params["w0_plus"] - w)**mu
+    if plasticity_params["add"] or plasticity_params["mlt"]:
+      return np.ones(w.shape)
+    else:
+      return np.abs(plasticity_params["w0_plus"] - w)**mu
+
   def f_minus(w, mu, plasticity_params):
-    return plasticity_params["alpha"]*np.abs(w - plasticity_params["w0_minus"])**mu
+    if plasticity_params["add"]:
+      return plasticity_params["alpha"]*np.ones(w.shape)
+    elif plasticity_params["mlt"]:
+      return plasticity_params["alpha"]*np.abs(w - plasticity_params["w0_minus"])
+    else:
+      return plasticity_params["alpha"]*np.abs(w - plasticity_params["w0_minus"])**mu
   competition = np.zeros(w_trajs.shape)
   cooperation = np.zeros(w_trajs.shape)
   for pattern in patterns:
@@ -71,14 +80,14 @@ def get_dynamical_terms(w_trajs, mu_trajs, patterns, neuron_params, plasticity_p
     fm_w = f_minus(w, mu, plasticity_params)
     competition[:, start_index:end_index] = (fm_w - fp_w)*sum_w
     cooperation[:, start_index:end_index] = fp_w*C_plus.dot(w)
-  
-  factor = plasticity_params["lmbda"]*neuron_params["tau_m"]*(simulation_params["r_pre"]**2)/simulation_params["N_pre"]
-  return factor*competition, factor*cooperation
 
-def get_vm_corr(pref_deg, kappa, c_tot):
+  factor = plasticity_params["lmbda"]*neuron_params["tau_m"]*(simulation_params["r_pre"]**2)/simulation_params["N_pre"]
+  return fp_w, fm_w, factor, competition, cooperation
+
+def get_vm_corr(pref_deg, kappa, c_tot, bias=0.):
    x = np.linspace(pi + pref_deg, -pi + pref_deg, 1000)
    vm = vonmises(kappa=kappa)
-   return vm.pdf(x)/np.sum(vm.pdf(x))*c_tot
+   return vm.pdf(x)/np.sum(vm.pdf(x))*c_tot + bias
 
 
 def make_data_dir():

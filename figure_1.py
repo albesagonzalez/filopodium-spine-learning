@@ -20,11 +20,12 @@ B_colour = plt.cm.tab20(2)
 plt.rcParams['figure.figsize'] = (6,5)
 
 
-def f_plus_fp(w, alpha, w0_plus, q, a,  **kwargs):
-    return np.abs((w0_plus - w - 1e-6))**((w+a)/q)
+def f_plus_fp(w, mu, alpha, w0_plus, q, a,  **kwargs):
+    return np.abs((w0_plus - w - 1e-6))**(mu)
 
-def f_minus_fp(w, alpha, w0_minus, q, a, **kwargs):
-    return alpha*np.abs(w - w0_minus + 1e-6)**((w+a)/q)
+def f_minus_fp(w, mu, alpha, w0_minus, q, a, **kwargs):
+    #return alpha*np.abs(w - w0_minus + 1e-6)**((w+a)/q)
+    return alpha*np.abs(w - w0_minus + 1e-6)**(mu)
 
 def gutig_f_plus_fp(w, alpha, w0_plus, mu_plus, **kwargs):
     return np.abs((1 - w - 1e-6))**(mu_plus)
@@ -39,14 +40,14 @@ def add_subplot_axes(ax,rect, text, facecolor='w'):
     height = box.height
     inax_position  = ax.transAxes.transform(rect[0:2])
     transFigure = fig.transFigure.inverted()
-    infig_position = transFigure.transform(inax_position)    
+    infig_position = transFigure.transform(inax_position)
     x = infig_position[0]
     y = infig_position[1]
     width *= rect[2]
     height *= rect[3]  # <= Typo was here
     subax = fig.add_axes([x,y,width,height],facecolor=facecolor)
     subax.set_xticks([0, 1])
-    subax.set_yticks([])
+    subax.set_yticks([0])
     subax.set_ylim([-1, 1.1])
     props = dict(boxstyle='round', facecolor='white')
     subax.text(0.15, -0.6, text, fontsize=14, bbox=props)
@@ -103,57 +104,67 @@ def make_1B():
 
 
 def make_1E(plasticity_params):
+    def mu_from_w(w):
+      return (plasticity_params["a"] + w)/plasticity_params["q"]
+
     fig = plt.figure(figsize=(6.5,5.5))
 
     axis = fig.add_subplot(1, 1, 1)
-    a_values = np.linspace(0, 1, 3)
+    a = 0
     w_values = np.linspace(0, 1, 1001)
+    mu_range_filo = [mu_from_w(0), mu_from_w(0.1)]
+    mu_range_spine = [mu_from_w(0.5), mu_from_w(1)]
 
-    for index, a in enumerate(a_values):
-        plasticity_params["a"] = a
-        f_plus_values = f_plus_fp(w_values, **plasticity_params)
-        f_minus_values = f_minus_fp(w_values, **plasticity_params)
-        plt.plot(w_values, (f_minus_values - f_plus_values), color=comp_colour, linewidth=0.3*(index+1))
-        plt.plot(w_values, f_plus_values, color=coop_colour, linewidth=0.6*(index+1))
-        plt.axhline(0, color='grey', linestyle='--', alpha=0.5)
-        plt.axvline(plasticity_params["w0_minus"], color='grey', linestyle='--', alpha=0.5)
-        plt.xlabel(r"weight $w$", fontsize=20)
-        plt.xticks([0, plasticity_params["w0_minus"], 1], [0, r"$w_0$", 1], fontsize=18)
-        plt.ylim([0, 1])
-        plt.xlim([0, 1])
-        sns.despine()
-        plt.yticks([-1, 0, 1], fontsize=18)
 
+    plt.plot(w_values, f_minus_fp(w_values, mu_range_filo[0], **plasticity_params) - f_plus_fp(w_values, mu_range_filo[0], **plasticity_params), c=filo_colour, linestyle='dashed')
+    plt.plot(w_values, f_minus_fp(w_values, mu_range_filo[1], **plasticity_params) - f_plus_fp(w_values, mu_range_filo[1], **plasticity_params), c=filo_colour, linestyle='dashed')
+    plt.fill_between(w_values, f_minus_fp(w_values, mu_range_filo[0], **plasticity_params) - f_plus_fp(w_values, mu_range_filo[0], **plasticity_params), f_minus_fp(w_values, mu_range_filo[1], **plasticity_params) - f_plus_fp(w_values, mu_range_filo[1], **plasticity_params), facecolor=filo_colour, alpha=0.5)
+    plt.plot(w_values, f_plus_fp(w_values, mu_range_filo[0], **plasticity_params), c=filo_colour)
+    plt.plot(w_values, f_plus_fp(w_values, mu_range_filo[1], **plasticity_params), c=filo_colour)
+    plt.fill_between(w_values, f_plus_fp(w_values, mu_range_filo[0], **plasticity_params), f_plus_fp(w_values, mu_range_filo[1], **plasticity_params), facecolor=filo_colour, alpha=0.5)
+    plt.plot(w_values, f_minus_fp(w_values, mu_range_spine[0]*np.ones(w_values.shape), **plasticity_params) - f_plus_fp(w_values, mu_range_spine[0]*np.ones(w_values.shape), **plasticity_params), c=spine_colour, linestyle='dashed')
+    plt.plot(w_values, f_minus_fp(w_values, mu_range_spine[1], **plasticity_params) - f_plus_fp(w_values, mu_range_spine[1], **plasticity_params), c=spine_colour, linestyle='dashed')
+    plt.fill_between(w_values, f_plus_fp(w_values, mu_range_spine[0], **plasticity_params), f_plus_fp(w_values, mu_range_spine[1], **plasticity_params), facecolor=spine_colour, alpha=0.5)
+    plt.plot(w_values, f_plus_fp(w_values, mu_range_spine[0], **plasticity_params), c=spine_colour)
+    plt.plot(w_values, f_plus_fp(w_values, mu_range_spine[1], **plasticity_params), c=spine_colour)
+    plt.fill_between(w_values, f_minus_fp(w_values, mu_range_spine[0], **plasticity_params) - f_plus_fp(w_values, mu_range_spine[0], **plasticity_params), f_minus_fp(w_values, mu_range_spine[1], **plasticity_params) - f_plus_fp(w_values, mu_range_spine[1], **plasticity_params), facecolor=spine_colour, alpha=0.5)
+
+    plt.axhline(0, color='black', alpha=0.8)
+    plt.axvline(plasticity_params["w0_minus"], color='black', alpha=0.8)
+    plt.xlabel(r"weight $w$", fontsize=20)
+    plt.xticks([0, plasticity_params["w0_minus"], 1], [0, r"$w_0$", 1], fontsize=18)
+    plt.yticks([0], fontsize=18)
+    plt.ylim([0, 1])
+    plt.xlim([0, 1])
+    sns.despine()
+    plt.yticks([-1, 0, 1], fontsize=18)
 
     subpos_add = [0.1,0.1,0.3,0.3]
     subpos_weight = [0.65,0.1,0.3,0.3]
     subax1 = add_subplot_axes(axis,subpos_add, text='add-STDP')
-    subax2 = add_subplot_axes(axis,subpos_weight, text='mult-STDP')
+    subax2 = add_subplot_axes(axis,subpos_weight, text=r"nlta$^*$-STDP, $\mu = 0.1$")
 
     plasticity_params["mu_minus"] = 0
     plasticity_params["mu_plus"] = 0
     f_plus_values = gutig_f_plus_fp(w_values, **plasticity_params)
     f_minus_values = gutig_f_minus_fp(w_values, **plasticity_params)
-    subax1.plot(w_values, f_minus_values - f_plus_values, color=comp_colour)
-    subax1.plot(w_values, f_plus_values, color=coop_colour)
-    subax1.axhline(0, color='grey', linestyle='--')
+    subax1.plot(w_values, f_minus_values - f_plus_values, color='black', linestyle='dashed')
+    subax1.plot(w_values, f_plus_values, color='black')
+    subax1.axhline(0, color='black', alpha=0.8)
 
     plasticity_params["mu_minus"] = 0.1
     plasticity_params["mu_plus"] = 0.1
     f_plus_values = gutig_f_plus_fp(w_values, **plasticity_params)
     f_minus_values = gutig_f_minus_fp(w_values, **plasticity_params)
-    subax2.plot(w_values, f_minus_values - f_plus_values, color=comp_colour)
-    subax2.plot(w_values, f_plus_values, color=coop_colour)
-    subax2.axhline(0, color='grey', linestyle='--')
+    subax2.plot(w_values, f_minus_values - f_plus_values, color='black', linestyle='dashed')
+    subax2.plot(w_values, f_plus_values, color='black')
+    subax2.axhline(0, color='black', alpha=0.8)
 
-    custom_lines = [Line2D([0], [0], color=comp_colour, lw=4),
-                    Line2D([0], [0], color=coop_colour, lw=4)]
+    custom_lines = [Line2D([0], [0], color='black', lw=4, linestyle='dashed'),
+                    Line2D([0], [0], color='black', lw=4)]
     plt.legend(custom_lines, [r"$\Delta f\;(w)$ (competition)", r"$f_+(w)$ (cooperation)"], fontsize=16, bbox_to_anchor=(0., -0.3, 0.1, 3), frameon=False)
-
-
     plt.savefig('Figures/1/PNG/E.png', dpi=300, transparent=True)
     plt.savefig('Figures/1/SVG/E.svg', dpi=300, transparent=True)
-
 
 
 def make_G1(filo_index, spine_index, patterns):
@@ -168,7 +179,6 @@ def make_G1(filo_index, spine_index, patterns):
     #plt.tight_layout()
     plt.savefig('Figures/1/PNG/G1.png', dpi=300, transparent=True)
     plt.savefig('Figures/1/SVG/G1.svg', dpi=300, transparent=True)
-
 
 
 def make_G2(filo_index, spine_index, plasticity_params, w):
@@ -198,6 +208,103 @@ def make_G3(filo_index, spine_index, w, patterns):
     plt.savefig('Figures/1/SVG/G3.svg', dpi=300, transparent=True)
 
 
+def make_G4(filo_index, spine_index,w_trajs, mu_trajs):
+    fig, axs = plt.subplots(2, 1, sharex='col', figsize=(4,5))
+    for w_traj, mu_traj in zip(w_trajs[filo_index], mu_trajs[filo_index]):
+      axs[0].plot(w_traj, color=filo_colour, linewidth=0.1, alpha=0.05)
+      axs[1].plot(mu_traj, color=filo_colour, linewidth=0.1, alpha=0.05)
+    for w_traj, mu_traj in zip(w_trajs[spine_index], mu_trajs[spine_index]):
+      axs[0].plot(w_traj, color=spine_colour, linewidth=0.1, alpha=0.4)
+      axs[1].plot(mu_traj, color=spine_colour, linewidth=0.1, alpha=0.4)
+    axs[0].plot(np.mean(w_trajs[spine_index], axis=0), color=spine_colour, linewidth=5)
+    axs[0].plot(np.mean(w_trajs[filo_index], axis=0), color=filo_colour, linewidth=5)
+    axs[1].plot(np.mean(mu_trajs[spine_index], axis=0), color=spine_colour, linewidth=5)
+    axs[1].plot(np.mean(mu_trajs[filo_index], axis=0), color=filo_colour, linewidth=5)
+
+    axs[0].set_yticks([0, 1],[0, 1], fontsize=18)
+    axs[0].set_ylabel(r"weight $w$", fontsize=20)
+    axs[1].set_ylabel(r"FS parameter $\mu$", fontsize=20)
+    axs[1].set_xticks([0, 200, 400], [0, 200, 400], fontsize=18)
+    axs[1].set_xlabel(r"time (s)", fontsize=20)
+    axs[1].set_yticks([0, 0.1, 0.2], [0, 0.1, 0.2], fontsize=18)
+
+    sns.despine()
+    #plt.tight_layout()
+    plt.savefig('Figures/1/PNG/G4.png', dpi=300, transparent=True)
+    plt.savefig('Figures/1/SVG/G4.svg', dpi=300, transparent=True)
+
+
+def make_supp11(w_trajs_add, filo_index_add, spine_index_add, w_trajs_nlta,filo_index_nlta, spine_index_nlta, w_trajs_FS, filo_index_FS, spine_index_FS):
+  fig, axs = plt.subplots(1, 3,  sharey='row', figsize=(10,3))
+
+  plt.savefig('Figures/1/SVG/supp11.svg', dpi=300, transparent=True)
+  plt.savefig('Figures/1/PNG/supp11.png', dpi=300, transparent=True)
+  plt.close()
+
+
+def make_supp12(w_trajs_add, fp_add, fm_add, competition_add, cooperation_add, filo_index_add, spine_index_add, w_trajs_nlta, fp_nlta, fm_nlta, competition_nlta, cooperation_nlta, filo_index_nlta, spine_index_nlta, w_trajs_FS, fp_FS, fm_FS, competition_FS, cooperation_FS, filo_index_FS, spine_index_FS):
+  fig, axs = plt.subplots(3, 3,  sharey='row', sharex='col', figsize=(10,9))
+  axs[0, 0].set_title("add-STDP", fontsize=20)
+  for w_traj in w_trajs_add[filo_index_add]:
+    axs[0, 0].plot(w_traj, color=filo_colour, linewidth=0.1, alpha=0.1)
+  for w_traj in w_trajs_add[spine_index_add]:
+    axs[0, 0].plot(w_traj, color=spine_colour, linewidth=0.1, alpha=0.1)
+  axs[0, 0].plot(np.mean(w_trajs_add[spine_index_add], axis=0), color=A_colour, linewidth=5)
+  axs[0, 0].plot(np.mean(w_trajs_add[filo_index_add], axis=0), color=filo_colour, linewidth=5)
+  axs[0, 0].set_ylabel(r"weight $w$", fontsize=20)
+  axs[0, 1].set_title(r"nlta-STDP ($\mu = 0.1$)", fontsize=20)
+  for w_traj in w_trajs_nlta[filo_index_nlta]:
+    axs[0, 1].plot(w_traj, color=filo_colour, linewidth=0.1, alpha=0.1)
+  for w_traj in w_trajs_nlta[spine_index_nlta]:
+    axs[0, 1].plot(w_traj, color=spine_colour, linewidth=0.1, alpha=0.1)
+  axs[0, 1].plot(np.mean(w_trajs_nlta[spine_index_nlta], axis=0), color=A_colour, linewidth=5)
+  axs[0, 1].plot(np.mean(w_trajs_nlta[filo_index_nlta], axis=0), color=filo_colour, linewidth=5)
+  axs[0, 2].set_title(r"FS-STDP", fontsize=20)
+  for w_traj in w_trajs_FS[filo_index_FS]:
+    axs[0, 2].plot(w_traj, color=filo_colour, linewidth=0.1, alpha=0.1)
+  for w_traj in w_trajs_FS[spine_index_FS]:
+    axs[0, 2].plot(w_traj, color=spine_colour, linewidth=0.1, alpha=0.1)
+  axs[0, 2].plot(np.mean(w_trajs_FS[spine_index_FS], axis=0), color=A_colour, linewidth=5)
+  axs[0, 2].plot(np.mean(w_trajs_FS[filo_index_FS], axis=0), color=filo_colour, linewidth=5)
+  axs[1, 0].plot(np.mean(competition_add[filo_index_add], axis=0), color=filo_colour, linestyle='dashed')
+  axs[1, 0].plot(np.mean(cooperation_add[filo_index_add], axis=0), color=filo_colour)
+  axs[1, 0].set_ylabel("mean-field\ninteractions", fontsize=20)
+  #axs[0, 0].plot(np.mean(competition_add[spine_index_add], axis=0), color=spine_colour, linestyle='dashed')
+  #axs[0, 0].plot(np.mean(cooperation_add[spine_index_add], axis=0), color=spine_colour)
+  #axs[0, 1].plot(np.mean(competition_nlta[filo_index_nlta], axis=0),color =filo_colour, linestyle='dashed')
+  #axs[0, 1].plot(np.mean(cooperation_nlta[filo_index_nlta], axis=0),color =filo_colour)
+  axs[1, 1].plot(np.mean(competition_nlta[spine_index_nlta], axis=0), color=spine_colour, linestyle='dashed')
+  axs[1, 1].plot(np.mean(cooperation_nlta[spine_index_nlta], axis=0), color=spine_colour)
+  axs[1, 2].plot(np.mean(competition_FS[filo_index_FS], axis=0),color =filo_colour, linestyle='dashed')
+  axs[1, 2].plot(np.mean(cooperation_FS[filo_index_FS], axis=0),color =filo_colour)
+  axs[1, 2].plot(np.mean(competition_FS[spine_index_FS], axis=0), color=spine_colour, linestyle='dashed')
+  axs[1, 2].plot(np.mean(cooperation_FS[spine_index_FS], axis=0), color=spine_colour)
+  axs[1, 0].set_ylim([-10, None])
+  #axs[1, 0].plot(np.mean(fp_add[spine_index_add], axis=0), color=spine_colour)
+  #axs[1, 0].plot(np.mean(fm_add[spine_index_add] - fp_FS[spine_index_add], axis=0), color=spine_colour, linestyle='dashed')
+  axs[2, 0].set_xlabel(r"time (s)", fontsize=20)
+  axs[2, 0].plot(np.mean(fp_add[filo_index_add], axis=0), color=filo_colour)
+  axs[2, 0].plot(np.mean(fm_add[filo_index_add] - fp_FS[filo_index_add], axis=0), color=filo_colour, linestyle='dashed')
+  axs[2, 0].set_ylabel("competition/\ncooperation", fontsize=20)
+  axs[2, 1].plot(np.mean(fp_nlta[spine_index_nlta], axis=0), color=spine_colour)
+  axs[2, 1].plot(np.mean(fm_nlta[spine_index_nlta] - fp_FS[spine_index_nlta], axis=0), color=spine_colour, linestyle='dashed')
+  #axs[2, 1].plot(np.mean(fp_nlta[filo_index_nlta], axis=0), color=filo_colour)
+  #axs[2, 1].plot(np.mean(fm_nlta[filo_index_nlta] - fp_FS[filo_index_nlta], axis=0), color=filo_colour, linestyle='dashed')
+  axs[2, 1].set_xlabel(r"time (s)", fontsize=20)
+  axs[2, 2].plot(np.mean(fp_FS[spine_index_FS], axis=0), color=spine_colour)
+  axs[2, 2].plot(np.mean(fm_FS[spine_index_FS] - fp_FS[spine_index_FS], axis=0),color=spine_colour, linestyle='dashed')
+  axs[2, 2].plot(np.mean(fp_FS[filo_index_FS], axis=0), color=filo_colour)
+  axs[2, 2].plot(np.mean(fm_FS[filo_index_FS] - fp_FS[filo_index_FS], axis=0), color=filo_colour, linestyle='dashed')
+  axs[2, 2].set_xlabel(r"time (s)", fontsize=20)
+  sns.despine()
+  plt.savefig('Figures/1/SVG/supp12.svg', dpi=300, transparent=True)
+  plt.savefig('Figures/1/PNG/supp12.png', dpi=300, transparent=True)
+  plt.close()
+
+
+
+
+
 if __name__ == "__main__":
     
     #define diagrams plasticity params
@@ -211,25 +318,30 @@ if __name__ == "__main__":
     plasticity_params["w0_plus"] = 1
     plasticity_params["w0_minus"] = 0.5
     plasticity_params["lmbda"] = 0.006
-    plasticity_params["alpha"] = 1.25
+    plasticity_params["alpha"] = 1.35
     plasticity_params["a"] = 0
     plasticity_params["q"] = 8
 
     make_1B()
     make_1E(plasticity_params)
 
-    with open('Data/figure_1.pickle', 'rb') as handle:
+    #with open('Data/figure_1.pickle', 'rb') as handle:
+    with open('Data/figure_1_gaussian.pickle', 'rb') as handle:
       data = pickle.load(handle)
+    globals().update(data)
 
-    patterns = data["patterns"]
-    w = data["w"]
-    filo_index = np.where(w < plasticity_params["w0_minus"])[0]
-    spine_index = np.where(w >= plasticity_params["w0_minus"])[0]
 
-    plt.rcParams['figure.figsize'] = (6,5)
-    make_G1(filo_index, spine_index, patterns)
-    make_G2(filo_index, spine_index, plasticity_params, w)
-    make_G3(filo_index, spine_index, w, patterns)
+    plt.rcParams['figure.figsize'] = (4,5)
+    w_FS = np.mean(w_trajs_FS[:, -10:], axis=1)
+    make_G1(filo_index_FS, spine_index_FS, patterns)
+    make_G2(filo_index_FS, spine_index_FS, plasticity_params, w_FS)
+    make_G3(filo_index_FS, spine_index_FS, w_FS, patterns)
+    make_G4(filo_index_FS, spine_index_FS,w_trajs_FS, mu_trajs_FS)
+
+
+    make_supp11(w_trajs_add, filo_index_add, spine_index_add, w_trajs_nlta, filo_index_nlta, spine_index_nlta, w_trajs_FS, filo_index_FS, spine_index_FS)
+    make_supp12(w_trajs_add, fp_add, fm_add, competition_add, cooperation_add, filo_index_add, spine_index_add, w_trajs_nlta, fp_nlta, fm_nlta, competition_nlta, cooperation_nlta, filo_index_nlta, spine_index_nlta, w_trajs_FS, fp_FS, fm_FS, competition_FS, cooperation_FS, filo_index_FS, spine_index_FS)
+
 
 
 

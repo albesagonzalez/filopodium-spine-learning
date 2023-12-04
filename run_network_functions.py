@@ -68,7 +68,9 @@ def run_FS_network(neuron_params, plasticity_params, simulation_params):
     S_exc = Synapses(inputs_exc, neurons_post,
                 '''w : 1
                     add : 1
-                    mult : 1
+                    mlt : 1
+                    nlta : 1
+                    FS : 1
                     q : 1
                     a : 1
                     tau_plus : second
@@ -99,11 +101,13 @@ def run_FS_network(neuron_params, plasticity_params, simulation_params):
                         w = clip(w, 0, w0_plus)
                         '''
                 )
-  elif plasticity_params["mult"]:
+  elif plasticity_params["mlt"]:
     S_exc = Synapses(inputs_exc, neurons_post,
                 '''w : 1
                     add : 1
-                    mult : 1
+                    mlt : 1
+                    nlta : 1
+                    FS : 1
                     q : 1
                     a : 1
                     tau_plus : second
@@ -125,7 +129,7 @@ def run_FS_network(neuron_params, plasticity_params, simulation_params):
                 on_pre='''
                         aux_exc += w
                         z_plus += 1
-                        w -= (w - 0) * alpha * lmbda * z_minus
+                        w -= (w - w0_minus) * alpha * lmbda * z_minus
                         w = clip(w, 0, w0_plus)
                         ''',
                 on_post='''
@@ -134,11 +138,50 @@ def run_FS_network(neuron_params, plasticity_params, simulation_params):
                         w = clip(w, 0, w0_plus)
                         '''
                 )
+  elif plasticity_params["nlta"]:
+    S_exc = Synapses(inputs_exc, neurons_post,
+                '''w : 1
+                    add : 1
+                    mlt : 1
+                    nlta : 1
+                    FS : 1
+                    q : 1
+                    a : 1
+                    tau_plus : second
+                    tau_minus : second
+                    tau_mu : second
+                    w0_plus : 1
+                    w0_minus : 1
+                    lmbda : 1
+                    alpha : 1
+                    delta_plus = lmbda : 1
+                    delta_minus = alpha*lmbda : 1
+                    mu_3 : 1
+                    z_3 = 1 : 1
+                    mu_minus : 1
+                    mu_plus : 1
+                    dz_minus/dt = -z_minus / tau_minus : 1 (event-driven)
+                    dz_plus/dt = -z_plus / tau_plus : 1 (event-driven)
+                    ''',
+                on_pre='''
+                        aux_exc += w
+                        z_plus += 1
+                        w -= abs(w - w0_minus)**mu_minus * alpha * lmbda * z_minus
+                        w = clip(w, 0, w0_plus)
+                        ''',
+                on_post='''
+                        z_minus += 1
+                        w += abs(w0_plus - w)**mu_plus * lmbda * z_3**mu_3 * z_plus
+                        w = clip(w, 0, w0_plus)
+                        '''
+                )
   else:
     S_exc = Synapses(inputs_exc, neurons_post,
                 '''w : 1
                     add : 1
-                    mult : 1
+                    mlt : 1
+                    nlta : 1
+                    FS : 1
                     q : 1
                     a : 1
                     tau_plus : second

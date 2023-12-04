@@ -27,6 +27,7 @@ from scipy.stats import pearsonr
 from aux import make_fig_dirs
 make_fig_dirs(fig_num='2')
 make_fig_dirs(fig_num='3')
+make_fig_dirs(fig_num='supp')
 
 
 coop_colour = plt.cm.tab20(6)
@@ -112,7 +113,7 @@ def make_2C(FR, y0):
   plt.xticks([0, 250, 500, 750, 1000], [r"$-\pi$", r"$-\pi/2$", r"$0$",  r"$\pi/2$",  r"$\pi$"], fontsize=18)
   plt.axhline(y0/Hz, xmax=0.5, linestyle='dashed', color='black')
   plt.text(s=r"$y_{pref}$", x=150, y=17, fontsize=22)
-  plt.xlabel(r"Input centered at", fontsize=20)
+  plt.xlabel(r"Stimulus Orientation $\theta$", fontsize=20)
   plt.ylabel(R"postsyn. activity $y_\theta$ (Hz)", fontsize=20)
   plt.yticks([0, 5, 10, 15, 20, 25], fontsize=20)
   sns.despine()
@@ -123,9 +124,9 @@ def make_2C(FR, y0):
   plt.close()
 
 
-def make_2D(w_trajs_FS, w_trajs_add, w_trajs_mult):
-  titles = ['FS-STDP', 'add-STDP', 'mult-STDP']
-  all_trajs = [w_trajs_FS, w_trajs_add, w_trajs_mult]
+def make_2D(w_trajs_FS, w_trajs_add, w_trajs_mlt):
+  titles = ['FS-STDP', 'add-STDP', 'mlt-STDP']
+  all_trajs = [w_trajs_FS, w_trajs_add, w_trajs_mlt]
   for index in range(len(all_trajs)):
     #plt.title(titles[index], fontsize=25)
     w_trajs = all_trajs[index]
@@ -149,8 +150,8 @@ def make_2D(w_trajs_FS, w_trajs_add, w_trajs_mult):
     plt.savefig('Figures/2/PNG/D{}.png'.format(index), dpi=300, transparent=True)
     plt.close()
 
-def make_2E(w_trajs_FS, w_trajs_add, w_trajs_mult):
-  all_trajs = [w_trajs_FS, w_trajs_add, w_trajs_mult]
+def make_2E(w_trajs_FS, w_trajs_add, w_trajs_mlt):
+  all_trajs = [w_trajs_FS, w_trajs_add, w_trajs_mlt]
   for index in range(len(all_trajs)):
     RFs = np.mean(all_trajs[index][:, -10:], axis=1)
     filo_index = np.where(RFs < 0.5)[0]
@@ -169,15 +170,15 @@ def make_2E(w_trajs_FS, w_trajs_add, w_trajs_mult):
     plt.close()
 
 
-def make_3A(data_FS, data_add, data_mult):
+def make_3A(data_FS, data_add, data_mlt, supp=False):
   n = 10
-  r_FS = np.nan_to_num(np.array(data_FS["corr"]).reshape((n, n)))
-  r_add = np.nan_to_num(np.array(data_add["corr"]).reshape((n, n)))
-  r_mult = np.nan_to_num(np.array(data_mult["corr"]).reshape((n, n)))
+  r_FS = np.nan_to_num(np.array(data_FS["corr"]).reshape((2, n, n)))
+  r_add = np.nan_to_num(np.array(data_add["corr"]).reshape((2, n, n)))
+  r_mlt = np.nan_to_num(np.array(data_mlt["corr"]).reshape((2, n, n)))
 
-
-  all_r= [r_FS, r_FS - r_add, r_FS - r_mult]
-  titles = [r"$r_{FS}$", r"$r_{FS}- r_{add}$", r"$r_{FS} - r_{mult}$"]
+  bias_index = 0 if not supp else 1
+  all_r= [r_FS[bias_index], r_FS[bias_index] - r_add[bias_index], r_FS[bias_index] - r_mlt[bias_index]]
+  titles = [r"$r_{FS}$", r"$r_{FS}- r_{add}$", r"$r_{FS} - r_{mlt}$"] if not supp else [r"$r_{FS}$", r"$r_{FS}- r_{nlta}$", r"$r_{FS} - r_{nlta^*}$"]
   fig, axs = plt.subplots(1, 3, sharey='row', figsize=(20, 7))
   for index, ax in enumerate(axs):
     ax.set_title(titles[index], fontsize=30, pad=20)
@@ -193,20 +194,25 @@ def make_3A(data_FS, data_add, data_mult):
   cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
   cb = fig.colorbar(im, cax=cbar_ax, ticks=[-1, 0, 1])
   cb.ax.tick_params(labelsize=16)
-  plt.savefig('Figures/3/SVG/F.svg', dpi=300, transparent=True)
-  plt.savefig('Figures/3/PNG/F.png', dpi=300, transparent=True)
+
+  if not supp:
+    plt.savefig('Figures/3/SVG/F.svg', dpi=300, transparent=True)
+    plt.savefig('Figures/3/PNG/F.png', dpi=300, transparent=True)
+  else:
+    plt.savefig('Figures/supp/SVG/3A.svg', dpi=300, transparent=True)
+    plt.savefig('Figures/supp/PNG/3A.png', dpi=300, transparent=True)
   plt.close()
 
 
-def make_3B(data_FS, data_add, data_mult):
-
+def make_3B(data_FS, data_add, data_mlt, supp=False):
+  bias_index = 0 if not supp else 1
   n = 10
-  DI_FS = np.nan_to_num(np.array(data_FS["DI"]).reshape((n, n)))
-  DI_add = np.nan_to_num(np.array(data_add["DI"]).reshape((n, n)))
-  DI_mult = np.nan_to_num(np.array(data_mult["DI"]).reshape((n, n)))
+  DI_FS = np.nan_to_num(np.array(data_FS["DI"]).reshape((2, n, n)))
+  DI_add = np.nan_to_num(np.array(data_add["DI"]).reshape((2, n, n)))
+  DI_mlt = np.nan_to_num(np.array(data_mlt["DI"]).reshape((2, n, n)))
 
-  all_DI = [DI_FS, DI_FS - DI_add, DI_FS - DI_mult]
-  titles = [r"$DI_{FS}$", r"$DI_{FS}- DI_{add}$", r"$DI_{FS} - DI_{mult}$"]
+  all_DI = [DI_FS[bias_index], DI_FS[bias_index] - DI_add[bias_index], DI_FS[bias_index] - DI_mlt[bias_index]]
+  titles = [r"$DI_{FS}$", r"$DI_{FS}- DI_{add}$", r"$DI_{FS} - DI_{mlt}$"] if not supp else [r"$DI_{FS}$", r"$DI_{FS}- DI_{nlta}$", r"$DI_{FS} - DI_{nlta^*}$"]
   fig, axs = plt.subplots(1, 3, sharey='row', figsize=(20, 7))
   for index, ax in enumerate(axs):
     ax.set_title(titles[index], fontsize=30, pad=20)
@@ -218,16 +224,59 @@ def make_3B(data_FS, data_add, data_mult):
     if index == 0:
       ax.set_ylabel(r"pot./dep. imbalance $\alpha$", fontsize=20)
       sns.despine()
-
   fig.subplots_adjust(right=0.8)
-  plt.savefig('Figures/3/SVG/G.svg', dpi=300, transparent=True)
-  plt.savefig('Figures/3/PNG/G.png', dpi=300, transparent=True)
+  if not supp:
+    plt.savefig('Figures/3/SVG/G.svg', dpi=300, transparent=True)
+    plt.savefig('Figures/3/PNG/G.png', dpi=300, transparent=True)
+  else:
+    plt.savefig('Figures/supp/SVG/3B.svg', dpi=300, transparent=True)
+    plt.savefig('Figures/supp/PNG/3B.png', dpi=300, transparent=True)
   plt.close()
 
 
-def make_3supp(data_FS, data_add, data_mult):
-  for rule, RFs in enumerate([data_FS["RF"], data_add["RF"], data_mult["RF"]]):
-    N = int(np.sqrt(len(RFs)))
+def make_supp3(competition_add, cooperation_add, filo_index_add, spine_index_add, competition_mlt, cooperation_mlt, competition_nlta, cooperation_nlta, competition_FS, cooperation_FS, filo_index_FS, spine_index_FS):
+  fig, axs = plt.subplots(1, 4,  sharey='row', figsize=(10,3))
+  axs[0].plot(np.mean(competition_add[filo_index_add], axis=0), color=filo_colour, linestyle='dashed')
+  axs[0].plot(np.mean(cooperation_add[filo_index_add], axis=0), color=filo_colour)
+  axs[0].plot(np.mean(competition_add[spine_index_add], axis=0), color=spine_colour, linestyle='dashed')
+  axs[0].plot(np.mean(cooperation_add[spine_index_add], axis=0), color=spine_colour)
+  axs[1].plot(np.mean(competition_mlt, axis=0), color=spine_colour, linestyle='dashed')
+  axs[1].plot(np.mean(cooperation_mlt, axis=0), color=spine_colour,)
+  axs[2].plot(np.mean(competition_nlta, axis=0), color=spine_colour, linestyle='dashed')
+  axs[2].plot(np.mean(cooperation_nlta, axis=0), color=spine_colour)
+  axs[3].plot(np.mean(competition_FS[filo_index_FS], axis=0),color =filo_colour, linestyle='dashed')
+  axs[3].plot(np.mean(cooperation_FS[filo_index_FS], axis=0),color =filo_colour)
+  axs[3].plot(np.mean(competition_FS[spine_index_FS], axis=0), color=spine_colour, linestyle='dashed')
+  axs[3].plot(np.mean(cooperation_FS[spine_index_FS], axis=0), color=spine_colour)
+  plt.savefig('Figures/3/SVG/supp31.svg', dpi=300, transparent=True)
+  plt.savefig('Figures/3/PNG/supp31.png', dpi=300, transparent=True)
+  plt.close()
+
+def make_supp22(w_trajs_add, w_trajs_nlta_25,  w_trajs_nlta_50,  w_trajs_nlta_100):
+  fig, axs = plt.subplots(1, 4,  sharey='row', figsize=(10,3))
+  titles = [r"$\mu$ = 0", r"$\mu$ = 0.025", r"$\mu$ = 0.05",r"$\mu$ = 0.075", r"$\mu$ = 0.1"]
+  for ax, w_trajs, title in zip(axs, [w_trajs_add, w_trajs_nlta_25, w_trajs_nlta_50, w_trajs_nlta_100], titles):
+    w = np.mean(w_trajs[:, -10:], axis=1)
+    filo_index = np.where(w < plasticity_params["w0_minus"])[0]
+    spine_index = np.where(w >= plasticity_params["w0_minus"])[0]
+    ax.scatter(filo_index, w[filo_index], color=filo_colour, s=1)
+    ax.scatter(spine_index, w[spine_index], color=spine_colour, s=1)
+    ax.set_title(title)
+    ax.set_xticks([0, 250, 500, 750, 1000], [r"$-\pi$", r"$-\pi/2$", r"$0$",  r"$\pi/2$",  r"$\pi$"], fontsize=18)
+    ax.set_xlabel(r"Neuron ID", fontsize=20)
+  axs[0].set_yticks([0, 1], [0, 1], fontsize=18)  
+  axs[0].set_ylabel(r"weight $w$", fontsize=18)
+  plt.tight_layout()
+  plt.savefig('Figures/2/SVG/supp22.svg', dpi=300, transparent=True)
+  plt.savefig('Figures/2/PNG/supp22.png', dpi=300, transparent=True)
+  plt.close()
+
+
+
+def make_supp_RF(data_FS_square, data_FS, data_add_square, data_add, data_mlt, data_nlta_00, data_nlta_05):
+  for rule, RFs in enumerate([data_FS_square["RF"], data_FS["RF"], data_add_square["RF"], data_add["RF"], data_mlt["RF"], data_nlta_00["RF"], data_nlta_05["RF"]]):
+    RFs = np.array(RFs).reshape((2, 10, 10, -1))[1].reshape((100, -1))
+    N = 10
     fig, axs = plt.subplots(N, N, sharex='col', sharey='row')
     for index, RF  in enumerate(RFs):
       i = index//N
@@ -245,9 +294,13 @@ def make_3supp(data_FS, data_add, data_mult):
     fig.text(0.04, 0.5, r'pot./dep. imbalance $\alpha$', va='center', rotation='vertical')
     fig.text(0.5, 0.04, r'total correlation $c_{tot}$', ha='center')
 
-    plt.savefig('Figures/3/SVG/supp3{}.svg'.format(rule+1), dpi=300, transparent=True)
-    plt.savefig('Figures/3/PNG/supp3{}.png'.format(rule+1), dpi=300, transparent=True)
+    plt.savefig('Figures/supp/SVG/RF{}.svg'.format(rule+1), dpi=300, transparent=True)
+    plt.savefig('Figures/supp/PNG/RF{}.png'.format(rule+1), dpi=300, transparent=True)
     plt.close()
+
+
+
+
     
 
 
@@ -273,7 +326,7 @@ if __name__ == '__main__':
     #define learning parameters
     plasticity_params = {}
     plasticity_params["add"] = 0
-    plasticity_params["mult"] = 0
+    plasticity_params["mlt"] = 0
     plasticity_params["q"] = 8
     plasticity_params["mu_plus"] = 0
     plasticity_params["mu_minus"] = 0
@@ -318,20 +371,51 @@ if __name__ == '__main__':
       data_DE = pickle.load(handle)
     globals().update(data_DE)
 
-    make_2D(w_trajs_FS, w_trajs_add, w_trajs_mult)
-    make_2E(w_trajs_FS, w_trajs_add, w_trajs_mult)
+    make_2D(w_trajs_FS, w_trajs_add, w_trajs_mlt)
+    make_2E(w_trajs_FS, w_trajs_add, w_trajs_mlt)
+
+    with open('Data/figure_mu_sweep.pickle', 'rb') as handle:
+      data_mu_sweep = pickle.load(handle)
+    globals().update(data_mu_sweep)    
+
+    make_supp22(w_trajs_add, w_trajs_nlta_25,  w_trajs_nlta_50,  w_trajs_nlta_100)
 
 
-    with open('Data/figure_3_FS.pickle', 'rb') as handle:
+    #make_2supp(competition_add, cooperation_add, filo_index_add, spine_index_add, competition_mlt, cooperation_mlt, competition_nlta, cooperation_nlta, competition_FS, cooperation_FS, filo_index_FS, spine_index_FS)
+
+    with open('Data/figure_2FG_FS_square.pickle', 'rb') as handle:
+      data_FS_square = pickle.load(handle)
+
+    with open('Data/figure_2FG_FS.pickle', 'rb') as handle:
       data_FS = pickle.load(handle)
-
-    with open('Data/figure_3_add.pickle', 'rb') as handle:
+  
+    with open('Data/figure_2FG_add.pickle', 'rb') as handle:
       data_add = pickle.load(handle)
 
-    with open('Data/figure_3_mult.pickle', 'rb') as handle:
-      data_mult = pickle.load(handle)
+    with open('Data/figure_2FG_add_square.pickle', 'rb') as handle:
+      data_add_square = pickle.load(handle)
+
+    with open('Data/figure_2FG_mlt.pickle', 'rb') as handle:
+      data_mlt = pickle.load(handle)
+
+    with open('Data/figure_2FG_nlta_00.pickle', 'rb') as handle:
+      data_nlta_00 = pickle.load(handle)
+
+    with open('Data/figure_2FG_nlta_05.pickle', 'rb') as handle:
+      data_nlta_05 = pickle.load(handle)
+
+    make_supp_RF(data_FS_square, data_FS, data_add_square, data_add, data_mlt, data_nlta_00, data_nlta_05)
+
+    make_3A(data_FS, data_add, data_mlt)
+    make_3B(data_FS, data_add, data_mlt)
+
+    make_3A(data_FS, data_nlta_00, data_nlta_05, supp=True)
+    make_3B(data_FS, data_nlta_00, data_nlta_05, supp=True)
+
+    #make_3A(data_FS, data_add, data_mlt)
+    #make_3B(data_FS, data_add, data_mlt)
 
 
-    make_3A(data_FS, data_add, data_mult)
-    make_3B(data_FS, data_add, data_mult)
-    make_3supp(data_FS, data_add, data_mult)
+    #with open('Data/figure_2FG_mlt.pickle', 'rb') as handle:
+    #  data_mlt = pickle.load(handle)
+
