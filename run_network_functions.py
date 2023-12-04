@@ -129,7 +129,7 @@ def run_FS_network(neuron_params, plasticity_params, simulation_params):
                 on_pre='''
                         aux_exc += w
                         z_plus += 1
-                        w -= (w - w0_minus) * alpha * lmbda * z_minus
+                        w -= -w * alpha * lmbda * z_minus
                         w = clip(w, 0, w0_plus)
                         ''',
                 on_post='''
