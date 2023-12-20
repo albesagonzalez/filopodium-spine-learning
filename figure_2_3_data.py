@@ -1,3 +1,4 @@
+from ctypes.wintypes import COLORREF
 import itertools
 import multiprocessing
 
@@ -8,8 +9,9 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib.colors import LinearSegmentedColormap
 import seaborn as sns
+import random
 
-from aux import c_timed_array, get_zero_current, get_vm_corr, get_dynamical_terms
+from aux import c_timed_array, get_zero_current, get_vm_corr, get_dynamical_terms, get_q_a
 from run_network_functions import run_FS_network
 
 from scipy.stats import pearsonr
@@ -31,12 +33,12 @@ def save_results(results_list, filename):
 
 def get_RF_DI(neuron_params, plasticity_params, simulation_params, w, c_0):
     
-    def DI_from_spike_train(recording_T, y_0, spike_times):
-      frs = np.zeros(int(recording_T/second))
+    def DI_from_spike_train(orientation_T, recording_T, y_0, spike_times):
+      frs = np.zeros(int(recording_T/orientation_T))
       for spike_time in spike_times.t:
-          t_index = int(spike_time//second)
-          frs[t_index] += 1
-      frs = frs/second
+          p_index = int(spike_time//orientation_T)
+          frs[p_index] += 1
+      frs = frs/orientation_T
       DI = np.zeros(simulation_params["N_pre"])
       for theta_index, y1 in enumerate(frs):
          DI[theta_index] = (y_0 - y1)/(y_0 + y1)
@@ -65,7 +67,7 @@ def get_RF_DI(neuron_params, plasticity_params, simulation_params, w, c_0):
     y_0 = spike_post_mon_0.count[0]/pattern_duration
 
     patterns = []
-    pattern_duration = 1*second  
+    pattern_duration = 1*second
     current_time = 0*second
     for theta_index in range(simulation_params["N_pre"]):
       pattern = {}
@@ -81,7 +83,7 @@ def get_RF_DI(neuron_params, plasticity_params, simulation_params, w, c_0):
 
     spike_ref_mon, spike_pre_mon, spike_post_mon, w_trajs, post_mon, mu_trajs = run_FS_network(neuron_params, plasticity_params, simulation_params)
 
-    return DI_from_spike_train(current_time, y_0, spike_post_mon)
+    return DI_from_spike_train(pattern_duration, current_time, y_0, spike_post_mon)
    
 
 
@@ -91,6 +93,8 @@ def get_RF_stats(params):
 
     for seed in range(num_seeds):
         simulation_params["seed"] = seed
+        #simulation_params["seed"] = random.randint(0, 100)
+
 
         plasticity_params["alpha"] = alpha
         kappa = 8
@@ -115,8 +119,11 @@ def get_RF_stats(params):
         c = patterns[0]["c"]
         w = np.mean(w_trajs[:, -10:], axis=1)
 
-        filo_index = np.where(w < plasticity_params["w0_minus"])[0]
-        spine_index = np.where(w >= plasticity_params["w0_minus"])[0]
+        #filo_index = np.where(w < plasticity_params["w0_minus"])[0]
+        #spine_index = np.where(w >= plasticity_params["w0_minus"])[0]
+
+        filo_index = np.where(w < 0.5)[0]
+        spine_index = np.where(w >= 0.5)[0]
 
         w_filo = w[filo_index]
         w_spine = w[spine_index]
@@ -211,6 +218,9 @@ if __name__ == '__main__':
     plasticity_params["w0_minus"] = 0.5
     plasticity_params["lmbda"] = 0.006
     plasticity_params["alpha"] = 1.35
+    plasticity_params["mu_filo"] = 0.01
+    plasticity_params["mu_spine"] = 0.1
+    plasticity_params["q"], plasticity_params["a"] = get_q_a(plasticity_params)
 
     #define network architecture and simulation specs
     simulation_params = {}
@@ -225,22 +235,25 @@ if __name__ == '__main__':
     simulation_params["w"] = 0.3
     simulation_params["seed"] = 0
 
+    '''
 
     #########################################################
     #simulate RF formation with von Mises shaped correlations
     #########################################################
     
     c_tot = 60
+    #c_tot = 0
+    bias = 0
     kappa = 8
 
     current_time = 0*second
-    A_duration = 200*second
+    A_duration = 400*second
 
     patterns = []
     pattern = {}
     pattern["start_time"] = current_time
     pattern["duration"] = A_duration
-    pattern["c"] = get_vm_corr(0, kappa, c_tot)
+    pattern["c"] = get_vm_corr(0, kappa, c_tot, bias)
     c = pattern["c"]
     patterns.append(pattern)
     current_time += pattern["duration"]
@@ -249,16 +262,22 @@ if __name__ == '__main__':
     simulation_params["c"] = c_timed_array(patterns, simulation_params)
     simulation_params["I_ext"] = get_zero_current(simulation_params, 0)
 
-    '''
+
     plasticity_params["add"] = 0
     plasticity_params["mlt"] = 0
     plasticity_params["nlta"] = 0
     plasticity_params["FS"] = 1
+
+
     spike_ref_mon, spike_pre_mon, spike_post_mon, w_trajs_FS, mu_trajs_FS, post_mon = run_FS_network(neuron_params, plasticity_params, simulation_params)
     fp_FS, fm_FS, factor_FS, competition_FS, cooperation_FS = get_dynamical_terms(w_trajs_FS, mu_trajs_FS, patterns, neuron_params, plasticity_params, simulation_params)
     w_FS = np.mean(w_trajs_FS[:, -10:], axis=1)
-    filo_index_FS = np.where(w_FS < plasticity_params["w0_minus"])[0]
-    spine_index_FS = np.where(w_FS >= plasticity_params["w0_minus"])[0]
+    #filo_index_FS = np.where(w_FS < plasticity_params["w0_minus"])[0]
+    #spine_index_FS = np.where(w_FS >= plasticity_params["w0_minus"])[0]
+
+    filo_index_FS = np.where(w_FS < 0.5)[0]
+    spine_index_FS = np.where(w_FS >= 0.5)[0]
+
 
 
     #########################################################
@@ -286,10 +305,12 @@ if __name__ == '__main__':
     results["FR_FS"] = FR_FS
     results["y_0"] = y_0
 
+    print(DI_FS)
+
     with open("Data/figure_2C.pickle", 'wb') as handle:
         pickle.dump(dict(results), handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    
+
     simulation_params["total_time"] =  A_duration
     simulation_params["r_pre"] = 30*Hz
     simulation_params["w"] = 0.3
@@ -313,6 +334,20 @@ if __name__ == '__main__':
     spine_index_add = np.where(w_add >= plasticity_params["w0_minus"])[0]
     fp_add, fm_add, factor_add, competition_add, cooperation_add = get_dynamical_terms(w_trajs_add, mu_trajs_add, patterns, neuron_params, plasticity_params, simulation_params)
 
+    plasticity_params["add"] = 0
+    plasticity_params["mlt"] = 1
+    plasticity_params["nlta"] = 0
+    plasticity_params["FS"] = 0
+    spike_ref_mon, spike_pre_mon, spike_post_mon, w_trajs_mlt, mu_trajs_mlt,  post_mon = run_FS_network(neuron_params, plasticity_params, simulation_params)
+    w_mlt = np.mean(w_trajs_mlt[:, -10:], axis=1)
+    filo_index_mlt = np.where(w_mlt < plasticity_params["w0_minus"])[0]
+    spine_index_mlt = np.where(w_mlt >= plasticity_params["w0_minus"])[0]
+    fp_mlt, fm_mlt, factor_mlt, competition_mlt, cooperation_mlt = get_dynamical_terms(w_trajs_mlt, mu_trajs_mlt, patterns, neuron_params, plasticity_params, simulation_params)
+
+
+    ###########################################
+    # get mu sweep for nlta
+    ###########################################
 
     plasticity_params["mu_plus"] = 0.025
     plasticity_params["mu_minus"] = 0.025
@@ -385,16 +420,6 @@ if __name__ == '__main__':
     simulation_params["I_ext"] = get_zero_current(simulation_params, 0)
     plasticity_params["w0_minus"] = 0.5
 
-    plasticity_params["add"] = 0
-    plasticity_params["mlt"] = 1
-    plasticity_params["nlta"] = 0
-    plasticity_params["FS"] = 0
-    spike_ref_mon, spike_pre_mon, spike_post_mon, w_trajs_mlt, mu_trajs_mlt,  post_mon = run_FS_network(neuron_params, plasticity_params, simulation_params)
-    w_mlt = np.mean(w_trajs_mlt[:, -10:], axis=1)
-    filo_index_mlt = np.where(w_mlt < plasticity_params["w0_minus"])[0]
-    spine_index_mlt = np.where(w_mlt >= plasticity_params["w0_minus"])[0]
-    fp_mlt, fm_mlt, factor_mlt, competition_mlt, cooperation_mlt = get_dynamical_terms(w_trajs_mlt, mu_trajs_mlt, patterns, neuron_params, plasticity_params, simulation_params)
-
     plasticity_params["mu_plus"] = 0.1
     plasticity_params["mu_minus"] = 0.1
     plasticity_params["add"] = 0
@@ -447,13 +472,14 @@ if __name__ == '__main__':
 
     with open("Data/figure_2DE.pickle", 'wb') as handle:
         pickle.dump(dict(results), handle, protocol=pickle.HIGHEST_PROTOCOL)
-    '''
+
+'''
 
     ##############################################################################
     #parameter sweep across potentation/depression imbalance and total correlation
     ##############################################################################
 
-    num_seeds = 1
+    num_seeds = 5
 
     simulation_params = {}
     simulation_params["total_time"] = 150*second
@@ -468,14 +494,16 @@ if __name__ == '__main__':
     simulation_params["seed"] = 0
     plasticity_params["lmbda"] = 0.006
 
-
     spans = OrderedDict()
     spans["bias"] =  {"min": 0., "max": 0.05 , "num_values": 2}
     spans["alpha"] =  {"min": 1., "max": 1.75, "num_values": 10}
+    #spans["c_tot"] =  {"min": 0., "max": 120 , "num_values": 10}
     spans["c_tot"] =  {"min": 0., "max": 120 , "num_values": 10}
     for key, value in spans.items():
         spans[key]["range"] = np.linspace(value["min"], value["max"], value["num_values"])
     mesh = list(itertools.product(*[span["range"] for span in spans.values()]))
+
+    '''
 
     plasticity_params["add"] = 0
     plasticity_params["mlt"] = 0
@@ -503,8 +531,8 @@ if __name__ == '__main__':
     plasticity_params["mlt"] = 0
     plasticity_params["nlta"] = 1
     plasticity_params["FS"] = 0
-    plasticity_params["mu_plus"] = 0.1
-    plasticity_params["mu_minus"] = 0.1
+    plasticity_params["mu_plus"] = 0.025
+    plasticity_params["mu_minus"] = 0.025
     plasticity_params["w0_minus"] = 0.
     experiment_params = [(neuron_params, plasticity_params, simulation_params, bias, alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
     pool = multiprocessing.Pool(processes=128)
@@ -515,13 +543,42 @@ if __name__ == '__main__':
     plasticity_params["nlta"] = 1
     plasticity_params["mlt"] = 0
     plasticity_params["FS"] = 0
-    plasticity_params["mu_plus"] = 0.1
-    plasticity_params["mu_minus"] = 0.1
+    plasticity_params["mu_plus"] = 0.025
+    plasticity_params["mu_minus"] = 0.025
     plasticity_params["w0_minus"] = 0.5
     experiment_params = [(neuron_params, plasticity_params, simulation_params, bias, alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
     pool = multiprocessing.Pool(processes=128)
     results_list = pool.map(get_RF_stats, experiment_params)
     save_results(results_list, filename='figure_2FG_nlta_05.pickle')
+
+    '''
+    plasticity_params["add"] = 0
+    plasticity_params["mlt"] = 0
+    plasticity_params["nlta"] = 1
+    plasticity_params["FS"] = 0
+    plasticity_params["mu_plus"] = 0.075
+    plasticity_params["mu_minus"] = 0.075
+    plasticity_params["w0_minus"] = 0.
+    experiment_params = [(neuron_params, plasticity_params, simulation_params, bias, alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
+    pool = multiprocessing.Pool(processes=128)
+    results_list = pool.map(get_RF_stats, experiment_params)
+    save_results(results_list, filename='figure_2FG_nlta_00_75.pickle')
+
+    plasticity_params["add"] = 0
+    plasticity_params["nlta"] = 1
+    plasticity_params["mlt"] = 0
+    plasticity_params["FS"] = 0
+    plasticity_params["mu_plus"] = 0.075
+    plasticity_params["mu_minus"] = 0.075
+    plasticity_params["w0_minus"] = 0.5
+    experiment_params = [(neuron_params, plasticity_params, simulation_params, bias, alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
+    pool = multiprocessing.Pool(processes=128)
+    results_list = pool.map(get_RF_stats, experiment_params)
+    save_results(results_list, filename='figure_2FG_nlta_05_75.pickle')
+
+    ''''
+
+ 
 
     plasticity_params["add"] = 1
     plasticity_params["mlt"] = 0
@@ -532,6 +589,7 @@ if __name__ == '__main__':
     results_list = pool.map(get_RF_stats, experiment_params)
     save_results(results_list, filename='figure_2FG_add.pickle')
 
+
     plasticity_params["add"] = 1
     plasticity_params["mlt"] = 0
     plasticity_params["nlta"] = 0
@@ -540,7 +598,8 @@ if __name__ == '__main__':
     pool = multiprocessing.Pool(processes=128)
     results_list = pool.map(get_square_RFs, experiment_params)
     save_results(results_list, filename='figure_2FG_add_square.pickle')
-  
+
+
     plasticity_params["add"] = 0
     plasticity_params["mlt"] = 1
     plasticity_params["nlta"] = 0
@@ -549,3 +608,5 @@ if __name__ == '__main__':
     pool = multiprocessing.Pool(processes=128)
     results_list = pool.map(get_RF_stats, experiment_params)
     save_results(results_list, filename='figure_2FG_mlt.pickle')
+
+    '''

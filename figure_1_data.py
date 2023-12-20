@@ -6,7 +6,7 @@ import matplotlib.cm as cm
 import pickle
 import os
 
-from aux import c_timed_array, get_zero_current, get_dynamical_terms, get_vm_corr
+from aux import c_timed_array, get_zero_current, get_dynamical_terms, get_vm_corr, get_q_a
 from run_network_functions import run_FS_network
 
 from aux import make_data_dir
@@ -35,8 +35,6 @@ if __name__ == "__main__":
     plasticity_params["mlt"] = 0
     plasticity_params["nlta"] = 0
     plasticity_params["FS"] = 1
-    plasticity_params["q"] = 8
-    plasticity_params["a"] = 0.
     plasticity_params["mu_plus"] = 0
     plasticity_params["mu_minus"] = 0
     plasticity_params["tau_mu"] = 20*second
@@ -47,10 +45,13 @@ if __name__ == "__main__":
     plasticity_params["lmbda"] = 0.006
     plasticity_params["w0_minus"] = 0.5
     plasticity_params["alpha"] = 1.35
+    plasticity_params["mu_filo"] = 0.01
+    plasticity_params["mu_spine"] = 0.1
+    plasticity_params["q"], plasticity_params["a"] = get_q_a(plasticity_params)
 
     #define network architecture and simulation specs
     simulation_params = {}
-    simulation_params["total_time"] = 150*second
+    simulation_params["total_time"] = 400*second
     simulation_params["integration_dt"] = 0.5*ms
     simulation_params["input_dt"] = 1*second
     simulation_params["w_recording_dt"] = 1*second
@@ -61,9 +62,12 @@ if __name__ == "__main__":
     simulation_params["w"] = 0.3
     simulation_params["seed"] = 0
 
-    c_mu = 0.15
+
+    #c_mu = 0.05
+    #c_sigma = 0.05
+    c_mu = 0.3
     c_sigma = 0.1
-    c_tot = 80
+    c_tot = 60
     kappa = 8
     patterns = []
     current_time = 0*second
@@ -71,9 +75,13 @@ if __name__ == "__main__":
     pattern = {}
     pattern["start_time"] = current_time
     pattern["duration"] = max_time
+    #option 1 (gaussian)
     #pattern["c"] = np.clip(c_mu + c_sigma*np.random.randn(1000), 0, None)
+    #pattern["c"] = pattern["c"]/np.sum(pattern["c"])*c_tot
+    #option 2 (squared pulse)
     #pattern["c"] = np.zeros((1000))
     #pattern["c"][np.arange(400, 600)] = c_tot/200
+    #option 3 (von Mises)
     pattern["c"] = get_vm_corr(0, kappa, c_tot)
     c = pattern["c"]
     patterns.append(pattern)
@@ -114,8 +122,6 @@ if __name__ == "__main__":
 
     plasticity_params["mu_plus"] = np.mean(mu_trajs_FS[spine_index_FS, -1])
     plasticity_params["mu_minus"] = np.mean(mu_trajs_FS[spine_index_FS, -1])
-    print(np.mean(mu_trajs_FS[spine_index_FS, -1]))
-    print(np.mean(mu_trajs_FS[spine_index_FS, -1]))
     plasticity_params["add"] = 0
     plasticity_params["mlt"] = 0
     plasticity_params["nlta"] = 1
@@ -138,7 +144,6 @@ if __name__ == "__main__":
     results["factor_FS"] = factor_FS
     results["competition_FS"] = competition_FS
     results["cooperation_FS"] = cooperation_FS
-    results["cooperation_FS"] = cooperation_FS
     results["w_trajs_add"] = w_trajs_add
     results["mu_trajs_add"] = mu_trajs_add
     results["filo_index_add"] = filo_index_add
@@ -158,5 +163,8 @@ if __name__ == "__main__":
     results["fm_nlta"] = fm_nlta
     results["factor_nlta"] = factor_nlta
         
-    with open("Data/figure_1.pickle", 'wb') as handle:
+
+    #with open("Data/figure_1_gaussian.pickle", 'wb') as handle:
+    #with open("Data/figure_1_squared.pickle", 'wb') as handle:
+    with open("Data/figure_1_von_mises.pickle", 'wb') as handle:
         pickle.dump(dict(results), handle, protocol=pickle.HIGHEST_PROTOCOL)

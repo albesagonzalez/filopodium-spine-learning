@@ -1,6 +1,14 @@
 from brian2 import *
 from scipy.stats import vonmises
 import os
+   
+
+def get_q_a(p_params):
+  w_filo = 0.
+  w_spine = (p_params["w0_minus"] + p_params["w0_plus"])/2
+  a =  (p_params["mu_spine"]*w_filo - p_params["mu_filo"]*w_spine)/(p_params["mu_filo"] - p_params["mu_spine"])
+  q = (w_filo + a)/p_params["mu_filo"]
+  return q, a  
 
 
 def generate_spike_trains(N, r, time, input_dt, **kwargs):
@@ -87,7 +95,9 @@ def get_dynamical_terms(w_trajs, mu_trajs, patterns, neuron_params, plasticity_p
 def get_vm_corr(pref_deg, kappa, c_tot, bias=0.):
    x = np.linspace(pi + pref_deg, -pi + pref_deg, 1000)
    vm = vonmises(kappa=kappa)
-   return vm.pdf(x)/np.sum(vm.pdf(x))*c_tot + bias
+   corr_structure = vm.pdf(x)/np.sum(vm.pdf(x))*c_tot + bias
+   corr_structure = c_tot*corr_structure/np.sum(corr_structure)
+   return corr_structure
 
 
 def make_data_dir():

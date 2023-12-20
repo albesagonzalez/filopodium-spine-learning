@@ -105,7 +105,7 @@ def make_4D(cons_FS, cons_add):
       cmap=LinearSegmentedColormap.from_list('rg',l, N=256)
       return cmap
 
-    titles = [r"protection $a=0$", r"protection $a=0.5$", r"protection $a=1$", r"add-STDP"]
+    titles = [r"$\mu_{spine} = 0.1$", "$\mu_{spine} = 0.25$", "$\mu_{spine} = 0.4$", r"add-STDP"]
     all_overlaps = [cons_FS[0], cons_FS[1], cons_FS[2], cons_add]
     fig, axs = plt.subplots(1, 4, sharey='row', figsize=(20, 7.5))
     for index, ax in enumerate(axs):

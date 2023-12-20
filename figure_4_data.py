@@ -6,7 +6,7 @@ from collections import defaultdict, OrderedDict
 import pickle
 from brian2 import *
 
-from aux import c_timed_array, get_zero_current, get_vm_corr
+from aux import c_timed_array, get_zero_current, get_vm_corr, get_q_a
 from run_network_functions import run_FS_network
 
 from aux import make_data_dir
@@ -27,14 +27,15 @@ def save_results_overlap(results_list, filename):
 
     
 def get_overlaps(params):
-    neuron_params, plasticity_params, simulation_params, r_pre, a, alpha, kappa_B, c_tot_B, delta_theta, num_seeds = params
+    neuron_params, plasticity_params, simulation_params, r_pre, mu_spine, alpha, kappa_B, c_tot_B, delta_theta, num_seeds = params
 
     for seed in range(num_seeds):
         simulation_params["seed"] = seed
 
         simulation_params["r_pre"] = r_pre
         plasticity_params["alpha"] = alpha
-        plasticity_params["a"] = a
+        plasticity_params["mu_spine"] = mu_spine
+        plasticity_params["q"], plasticity_params["a"] = get_q_a(plasticity_params)
 
         current_time = 0*second
         A_duration = 400*second
@@ -125,7 +126,9 @@ if __name__ == "__main__":
     #define learning parameters
     plasticity_params = {}
     plasticity_params["add"] = 0
-    plasticity_params["mult"] = 0
+    plasticity_params["mlt"] = 0
+    plasticity_params["nlta"] = 0
+    plasticity_params["FS"] = 1
     plasticity_params["q"] = 8
     plasticity_params["a"] = 0.
     plasticity_params["mu_plus"] = 0
@@ -139,6 +142,9 @@ if __name__ == "__main__":
     plasticity_params["lmbda"] = 0.006
     #plasticity_params["alpha"] = 1.75
     plasticity_params["alpha"] = 1.35
+    plasticity_params["mu_filo"] = 0.01
+    plasticity_params["mu_spine"] = 0.1
+    plasticity_params["q"], plasticity_params["a"] = get_q_a(plasticity_params)
 
     #define network architecture and simulation specs
     simulation_params = {}
@@ -154,8 +160,8 @@ if __name__ == "__main__":
     simulation_params["seed"] = 0
 
 
-    c_tot_A = 80
-    c_tot_B = 80
+    c_tot_A = 60
+    c_tot_B = 60
     kappa_A = 8
     kappa_B = 8
 
@@ -176,9 +182,9 @@ if __name__ == "__main__":
     simulation_params["c"] = c_timed_array(patterns, simulation_params)
     simulation_params["I_ext"] = get_zero_current(simulation_params, 0)
 
-    plasticity_params["a"] = 0.
+  
     plasticity_params["add"] = 0
-    plasticity_params["mult"] = 0
+    plasticity_params["mlt"] = 0
     spike_ref_mon, spike_pre_mon, spike_post_mon, w_trajs, mu_trajs, post_mon = run_FS_network(neuron_params, plasticity_params, simulation_params)
     w_B = np.mean(w_trajs[:,-10:], axis=1)
     spine_index_B = np.where(w_B >= plasticity_params["w0_minus"])[0]
@@ -219,9 +225,7 @@ if __name__ == "__main__":
     #for a = 0. (total overwriting)
     ###############################
 
-    plasticity_params["a"] = 0.
-    plasticity_params["add"] = 0
-    plasticity_params["mult"] = 0
+
     spike_ref_mon, spike_pre_mon, spike_post_mon, w_trajs, mu_trajs, post_mon = run_FS_network(neuron_params, plasticity_params, simulation_params)
     A_stop_index = int(patterns[1]["start_time"]/simulation_params["w_recording_dt"]) - 1
     w_A = np.mean(w_trajs[:,A_stop_index-10:A_stop_index], axis=1)
@@ -240,7 +244,9 @@ if __name__ == "__main__":
     #for a = 0.4 (partial overwriting)
     ##################################
 
-    plasticity_params["a"] = 0.4
+    plasticity_params["mu_spine"] = 0.15
+    plasticity_params["q"], plasticity_params["a"] = get_q_a(plasticity_params)
+    #plasticity_params["a"] = 0.4
     spike_ref_mon, spike_pre_mon, spike_post_mon, w_trajs, mu_trajs, post_mon = run_FS_network(neuron_params, plasticity_params, simulation_params)
     A_stop_index = int(patterns[1]["start_time"]/simulation_params["w_recording_dt"]) - 1
     w_A = np.mean(w_trajs[:,A_stop_index-10:A_stop_index], axis=1)
@@ -259,7 +265,9 @@ if __name__ == "__main__":
     #for a = 1 (no overwriting)
     ###########################
     
-    plasticity_params["a"] = 1
+    plasticity_params["mu_spine"] = 0.3
+    plasticity_params["q"], plasticity_params["a"] = get_q_a(plasticity_params)
+    #plasticity_params["a"] = 1
     spike_ref_mon, spike_pre_mon, spike_post_mon, w_trajs, mu_trajs, post_mon = run_FS_network(neuron_params, plasticity_params, simulation_params)
     A_stop_index = int(patterns[1]["start_time"]/simulation_params["w_recording_dt"]) - 1
     w_A = np.mean(w_trajs[:,A_stop_index-10:A_stop_index], axis=1)
@@ -300,7 +308,7 @@ if __name__ == "__main__":
 
     spans = OrderedDict()
     spans["r_pre"] = {"min": 30*Hz, "max": 30*Hz, "num_values": 1}
-    spans["a"] = {"min": 0., "max": 1., "num_values": 3}
+    spans["mu_spine"] = {"min": 0.1, "max": 0.4, "num_values": 3}
     spans["alpha"] =  {"min": 1.15, "max": 1.75, "num_values": 10}
     spans["kappa"] =  {"min": 8, "max": 8, "num_values": 1}
     spans["c_tot"] =  {"min": 40., "max": 120., "num_values": 10}
@@ -312,8 +320,10 @@ if __name__ == "__main__":
     mesh = list(itertools.product(*[span["range"] for span in spans.values()]))
 
     plasticity_params["add"] = 0
-    plasticity_params["mult"] = 0
-    experiment_params = [(neuron_params, plasticity_params, simulation_params, r_pre, a, alpha, kappa, c_tot, delta_theta, num_seeds) for r_pre, a, alpha, kappa, c_tot, delta_theta in mesh]
+    plasticity_params["mlt"] = 0
+    plasticity_params["nlta"] = 0
+    plasticity_params["FS"] = 1
+    experiment_params = [(neuron_params, plasticity_params, simulation_params, r_pre, mu_spine, alpha, kappa, c_tot, delta_theta, num_seeds) for r_pre, mu_spine, alpha, kappa, c_tot, delta_theta in mesh]
     pool = multiprocessing.Pool(processes=128)
     results_list = pool.map(get_overlaps, experiment_params)
     save_results_overlap(results_list, filename='figure_4_overlap_FS.pickle')
@@ -322,14 +332,14 @@ if __name__ == "__main__":
     ########
     #add-STDP
     ########
-    spans["a"] = {"min": 0., "max": 0., "num_values": 1}
+    spans["mu_spine"] = {"min": 0., "max": 0., "num_values": 1}
     for key, value in spans.items():
         spans[key]["range"] = np.linspace(value["min"], value["max"], value["num_values"])
     mesh = list(itertools.product(*[span["range"] for span in spans.values()]))
 
     plasticity_params["add"] = 1
-    plasticity_params["mult"] = 0
-    experiment_params = [(neuron_params, plasticity_params, simulation_params, r_pre, a, alpha, kappa, c_tot, delta_theta, num_seeds) for r_pre, a, alpha, kappa, c_tot, delta_theta in mesh]
+    plasticity_params["mlt"] = 0
+    experiment_params = [(neuron_params, plasticity_params, simulation_params, r_pre, mu_spine, alpha, kappa, c_tot, delta_theta, num_seeds) for r_pre, mu_spine, alpha, kappa, c_tot, delta_theta in mesh]
     pool = multiprocessing.Pool(processes=128)
     results_list = pool.map(get_overlaps, experiment_params)
     save_results_overlap(results_list, filename='figure_4_overlap_add.pickle')

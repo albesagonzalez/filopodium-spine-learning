@@ -176,7 +176,8 @@ def make_3A(data_FS, data_add, data_mlt, supp=False):
   r_add = np.nan_to_num(np.array(data_add["corr"]).reshape((2, n, n)))
   r_mlt = np.nan_to_num(np.array(data_mlt["corr"]).reshape((2, n, n)))
 
-  bias_index = 0 if not supp else 1
+  #bias_index = 0 if not supp else 1
+  bias_index = 0
   all_r= [r_FS[bias_index], r_FS[bias_index] - r_add[bias_index], r_FS[bias_index] - r_mlt[bias_index]]
   titles = [r"$r_{FS}$", r"$r_{FS}- r_{add}$", r"$r_{FS} - r_{mlt}$"] if not supp else [r"$r_{FS}$", r"$r_{FS}- r_{nlta}$", r"$r_{FS} - r_{nlta^*}$"]
   fig, axs = plt.subplots(1, 3, sharey='row', figsize=(20, 7))
@@ -205,13 +206,15 @@ def make_3A(data_FS, data_add, data_mlt, supp=False):
 
 
 def make_3B(data_FS, data_add, data_mlt, supp=False):
-  bias_index = 0 if not supp else 1
+  #bias_index = 0 if not supp else 1
+  bias_index = 0
   n = 10
   DI_FS = np.nan_to_num(np.array(data_FS["DI"]).reshape((2, n, n)))
   DI_add = np.nan_to_num(np.array(data_add["DI"]).reshape((2, n, n)))
   DI_mlt = np.nan_to_num(np.array(data_mlt["DI"]).reshape((2, n, n)))
 
   all_DI = [DI_FS[bias_index], DI_FS[bias_index] - DI_add[bias_index], DI_FS[bias_index] - DI_mlt[bias_index]]
+  #all_DI = [DI_FS[bias_index], DI_add[bias_index],  DI_mlt[bias_index]]
   titles = [r"$DI_{FS}$", r"$DI_{FS}- DI_{add}$", r"$DI_{FS} - DI_{mlt}$"] if not supp else [r"$DI_{FS}$", r"$DI_{FS}- DI_{nlta}$", r"$DI_{FS} - DI_{nlta^*}$"]
   fig, axs = plt.subplots(1, 3, sharey='row', figsize=(20, 7))
   for index, ax in enumerate(axs):
@@ -275,7 +278,7 @@ def make_supp22(w_trajs_add, w_trajs_nlta_25,  w_trajs_nlta_50,  w_trajs_nlta_10
 
 def make_supp_RF(data_FS_square, data_FS, data_add_square, data_add, data_mlt, data_nlta_00, data_nlta_05):
   for rule, RFs in enumerate([data_FS_square["RF"], data_FS["RF"], data_add_square["RF"], data_add["RF"], data_mlt["RF"], data_nlta_00["RF"], data_nlta_05["RF"]]):
-    RFs = np.array(RFs).reshape((2, 10, 10, -1))[1].reshape((100, -1))
+    RFs = np.array(RFs).reshape((2, 10, 10, -1))[0].reshape((100, -1))
     N = 10
     fig, axs = plt.subplots(N, N, sharex='col', sharey='row')
     for index, RF  in enumerate(RFs):
@@ -297,12 +300,6 @@ def make_supp_RF(data_FS_square, data_FS, data_add_square, data_add, data_mlt, d
     plt.savefig('Figures/supp/SVG/RF{}.svg'.format(rule+1), dpi=300, transparent=True)
     plt.savefig('Figures/supp/PNG/RF{}.png'.format(rule+1), dpi=300, transparent=True)
     plt.close()
-
-
-
-
-    
-
 
 
 
@@ -398,11 +395,12 @@ if __name__ == '__main__':
     with open('Data/figure_2FG_mlt.pickle', 'rb') as handle:
       data_mlt = pickle.load(handle)
 
-    with open('Data/figure_2FG_nlta_00.pickle', 'rb') as handle:
+    with open('Data/figure_2FG_nlta_00_75.pickle', 'rb') as handle:
       data_nlta_00 = pickle.load(handle)
 
-    with open('Data/figure_2FG_nlta_05.pickle', 'rb') as handle:
+    with open('Data/figure_2FG_nlta_05_75.pickle', 'rb') as handle:
       data_nlta_05 = pickle.load(handle)
+
 
     make_supp_RF(data_FS_square, data_FS, data_add_square, data_add, data_mlt, data_nlta_00, data_nlta_05)
 

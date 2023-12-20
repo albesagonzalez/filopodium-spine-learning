@@ -86,6 +86,8 @@ def run_FS_network(neuron_params, plasticity_params, simulation_params):
                     z_3 = 1 : 1
                     mu_minus : 1
                     mu_plus : 1
+                    mu_filo : 1
+                    mu_spine : 1
                     dz_minus/dt = -z_minus / tau_minus : 1 (event-driven)
                     dz_plus/dt = -z_plus / tau_plus : 1 (event-driven)
                     ''',
@@ -123,6 +125,8 @@ def run_FS_network(neuron_params, plasticity_params, simulation_params):
                     z_3 = 1 : 1
                     mu_minus : 1
                     mu_plus : 1
+                    mu_filo : 1
+                    mu_spine : 1
                     dz_minus/dt = -z_minus / tau_minus : 1 (event-driven)
                     dz_plus/dt = -z_plus / tau_plus : 1 (event-driven)
                     ''',
@@ -160,6 +164,8 @@ def run_FS_network(neuron_params, plasticity_params, simulation_params):
                     z_3 = 1 : 1
                     mu_minus : 1
                     mu_plus : 1
+                    mu_filo : 1
+                    mu_spine : 1
                     dz_minus/dt = -z_minus / tau_minus : 1 (event-driven)
                     dz_plus/dt = -z_plus / tau_plus : 1 (event-driven)
                     ''',
@@ -195,6 +201,8 @@ def run_FS_network(neuron_params, plasticity_params, simulation_params):
                     delta_minus = alpha*lmbda : 1
                     mu_3 : 1
                     z_3 = 1 : 1
+                    mu_filo : 1
+                    mu_spine : 1
                     dmu_minus/dt = -(mu_minus - (w+a)/q)/tau_mu : 1 (event-driven)
                     dmu_plus/dt = -(mu_plus - (w+a)/q)/tau_mu : 1 (event-driven)
                     dz_minus/dt = -z_minus / tau_minus : 1 (event-driven)
