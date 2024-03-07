@@ -5,6 +5,7 @@ import pickle
 
 from aux import make_fig_dirs, get_q_a
 make_fig_dirs(fig_num='1')
+make_fig_dirs(fig_num='supp')
 
 coop_colour = plt.cm.tab20(6)
 comp_colour = plt.cm.tab20(0)
@@ -244,7 +245,7 @@ def make_G4(filo_index, spine_index,w_trajs, mu_trajs):
 
 
 
-def make_supp123(w_trajs_add, fp_add, fm_add, competition_add, cooperation_add, filo_index_add, spine_index_add, w_trajs_nlta, fp_nlta, fm_nlta, competition_nlta, cooperation_nlta, filo_index_nlta, spine_index_nlta, w_trajs_FS, fp_FS, fm_FS, competition_FS, cooperation_FS, filo_index_FS, spine_index_FS):
+def make_supp123(w_trajs_add, fp_add, fm_add, competition_add, cooperation_add, filo_index_add, spine_index_add, w_trajs_nlta, fp_nlta, fm_nlta, competition_nlta, cooperation_nlta, filo_index_nlta, spine_index_nlta, w_trajs_FS, fp_FS, fm_FS, competition_FS, cooperation_FS, filo_index_FS, spine_index_FS, num_fig):
   fig, axs = plt.subplots(3, 3,  sharey='row', sharex='col', figsize=(10,9))
   axs[0, 0].set_title("add-STDP", fontsize=20)
   for w_traj in w_trajs_add[filo_index_add]:
@@ -254,7 +255,7 @@ def make_supp123(w_trajs_add, fp_add, fm_add, competition_add, cooperation_add, 
   axs[0, 0].plot(np.mean(w_trajs_add[spine_index_add], axis=0), color=A_colour, linewidth=5)
   axs[0, 0].plot(np.mean(w_trajs_add[filo_index_add], axis=0), color=filo_colour, linewidth=5)
   axs[0, 0].set_ylabel(r"weight $w$", fontsize=20)
-  axs[0, 1].set_title(r"nlta$^*$-STDP ($\mu = 0.1$)", fontsize=20)
+  axs[0, 1].set_title(r"nlta$^*$-STDP", fontsize=20)
   for w_traj in w_trajs_nlta[filo_index_nlta]:
     axs[0, 1].plot(w_traj, color=filo_colour, linewidth=0.1, alpha=0.1)
   for w_traj in w_trajs_nlta[spine_index_nlta]:
@@ -302,9 +303,25 @@ def make_supp123(w_trajs_add, fp_add, fm_add, competition_add, cooperation_add, 
                     Line2D([0], [0], color='black', lw=4)]
   plt.legend(custom_lines, [r"$\Delta f\;(w_i)\sum w_j$", r"$f_+(w_i)\sum C_{ij}^+w_j$"], fontsize=16, bbox_to_anchor=(0., -0.3, 0.1, 3), frameon=False)
   sns.despine()
-  plt.savefig('Figures/supp/SVG/123.svg', dpi=300, transparent=True)
-  plt.savefig('Figures/supp/PNG/123.png', dpi=300, transparent=True)
+  plt.savefig('Figures/supp/SVG/{}.svg'.format(num_fig), dpi=300, transparent=True)
+  plt.savefig('Figures/supp/PNG/{}.png'.format(num_fig), dpi=300, transparent=True)
   plt.close()
+
+def make_supp_6(corr_matrix):
+  plt.close()
+  fig = plt.figure(figsize=(7,7))
+  plt.imshow(corr_matrix)
+  plt.title(r"Correlation $c_i$", fontsize=20)
+  plt.xticks([0, 500, 1000], fontsize=18)
+  plt.yticks([0, 500, 1000], fontsize=18)
+  plt.ylabel("Neuron ID", fontsize=20)
+  plt.xlabel(r"Stimulus Orientation $\theta$", fontsize=20)
+  plt.xticks([0, 250, 500, 750, 1000], [r"$-\pi$", r"$-\pi/2$", r"$0$", r"$\pi/2$", r"$\pi$"])
+  plt.tight_layout()
+  cb = plt.colorbar(ticks=[0, 0.4], shrink=0.7)
+  cb.ax.tick_params(labelsize=18)
+  plt.savefig("Figures/supp/SVG/6.svg", transparent=True, dpi=300)
+  plt.savefig("Figures/supp/PNG/6.png", transparent=True, dpi=300)
 
 
 
@@ -332,25 +349,34 @@ if __name__ == "__main__":
     make_1B()
     make_1E(plasticity_params)
 
-    #with open('Data/figure_1.pickle', 'rb') as handle:
-    #with open('Data/figure_1_gaussian.pickle', 'rb') as handle:
-    #with open('Data/figure_1_squared.pickle', 'rb') as handle:
-    with open('Data/figure_1_von_mises.pickle', 'rb') as handle:
+    with open('Data/figure_1_gaussian.pickle', 'rb') as handle:
       data = pickle.load(handle)
     globals().update(data)
-
-
     plt.rcParams['figure.figsize'] = (4,5)
     w_FS = np.mean(w_trajs_FS[:, -10:], axis=1)
+
     make_G1(filo_index_FS, spine_index_FS, patterns)
     make_G2(filo_index_FS, spine_index_FS, plasticity_params, w_FS)
     make_G3(filo_index_FS, spine_index_FS, w_FS, patterns)
     make_G4(filo_index_FS, spine_index_FS,w_trajs_FS, mu_trajs_FS)
+    make_supp123(w_trajs_add, fp_add, fm_add, competition_add, cooperation_add, filo_index_add, spine_index_add, w_trajs_nlta, fp_nlta, fm_nlta, competition_nlta, cooperation_nlta, filo_index_nlta, spine_index_nlta, w_trajs_FS, fp_FS, fm_FS, competition_FS, cooperation_FS, filo_index_FS, spine_index_FS, num_fig='1')
 
 
-    make_supp123(w_trajs_add, fp_add, fm_add, competition_add, cooperation_add, filo_index_add, spine_index_add, w_trajs_nlta, fp_nlta, fm_nlta, competition_nlta, cooperation_nlta, filo_index_nlta, spine_index_nlta, w_trajs_FS, fp_FS, fm_FS, competition_FS, cooperation_FS, filo_index_FS, spine_index_FS)
+    with open('Data/figure_1_squared.pickle', 'rb') as handle:
+      data = pickle.load(handle)
+    globals().update(data)
+    make_supp123(w_trajs_add, fp_add, fm_add, competition_add, cooperation_add, filo_index_add, spine_index_add, w_trajs_nlta, fp_nlta, fm_nlta, competition_nlta, cooperation_nlta, filo_index_nlta, spine_index_nlta, w_trajs_FS, fp_FS, fm_FS, competition_FS, cooperation_FS, filo_index_FS, spine_index_FS, num_fig='2')
+      
+
+    with open('Data/figure_1_von_mises.pickle', 'rb') as handle:
+      data = pickle.load(handle)
+    globals().update(data)
+    make_supp123(w_trajs_add, fp_add, fm_add, competition_add, cooperation_add, filo_index_add, spine_index_add, w_trajs_nlta, fp_nlta, fm_nlta, competition_nlta, cooperation_nlta, filo_index_nlta, spine_index_nlta, w_trajs_FS, fp_FS, fm_FS, competition_FS, cooperation_FS, filo_index_FS, spine_index_FS, num_fig='3')
 
 
+    with open('Data/figure_corr_heatmap.pickle', 'rb') as handle:
+       data = pickle.load(handle)
+    make_supp_6(data["corr_matrix"])
 
 
 

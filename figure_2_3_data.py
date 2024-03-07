@@ -119,9 +119,6 @@ def get_RF_stats(params):
         c = patterns[0]["c"]
         w = np.mean(w_trajs[:, -10:], axis=1)
 
-        #filo_index = np.where(w < plasticity_params["w0_minus"])[0]
-        #spine_index = np.where(w >= plasticity_params["w0_minus"])[0]
-
         filo_index = np.where(w < 0.5)[0]
         spine_index = np.where(w >= 0.5)[0]
 
@@ -235,19 +232,18 @@ if __name__ == '__main__':
     simulation_params["w"] = 0.3
     simulation_params["seed"] = 0
 
-    '''
+
 
     #########################################################
     #simulate RF formation with von Mises shaped correlations
     #########################################################
     
     c_tot = 60
-    #c_tot = 0
     bias = 0
     kappa = 8
 
     current_time = 0*second
-    A_duration = 400*second
+    A_duration = 200*second
 
     patterns = []
     pattern = {}
@@ -406,7 +402,7 @@ if __name__ == '__main__':
 
 
     current_time = 0*second
-    A_duration = 400*second
+    A_duration = 200*second
     simulation_params["N_pre"] = len(spine_index_FS)
     patterns = []
     pattern = {}
@@ -473,7 +469,7 @@ if __name__ == '__main__':
     with open("Data/figure_2DE.pickle", 'wb') as handle:
         pickle.dump(dict(results), handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-'''
+
 
     ##############################################################################
     #parameter sweep across potentation/depression imbalance and total correlation
@@ -494,8 +490,10 @@ if __name__ == '__main__':
     simulation_params["seed"] = 0
     plasticity_params["lmbda"] = 0.006
 
+
+
     spans = OrderedDict()
-    spans["bias"] =  {"min": 0., "max": 0.05 , "num_values": 2}
+    spans["bias"] =  {"min": 0., "max": 0.05 , "num_values": 1}
     spans["alpha"] =  {"min": 1., "max": 1.75, "num_values": 10}
     #spans["c_tot"] =  {"min": 0., "max": 120 , "num_values": 10}
     spans["c_tot"] =  {"min": 0., "max": 120 , "num_values": 10}
@@ -503,7 +501,7 @@ if __name__ == '__main__':
         spans[key]["range"] = np.linspace(value["min"], value["max"], value["num_values"])
     mesh = list(itertools.product(*[span["range"] for span in spans.values()]))
 
-    '''
+ 
 
     plasticity_params["add"] = 0
     plasticity_params["mlt"] = 0
@@ -527,58 +525,6 @@ if __name__ == '__main__':
     save_results(results_list, filename='figure_2FG_FS_square.pickle')
 
 
-    plasticity_params["add"] = 0
-    plasticity_params["mlt"] = 0
-    plasticity_params["nlta"] = 1
-    plasticity_params["FS"] = 0
-    plasticity_params["mu_plus"] = 0.025
-    plasticity_params["mu_minus"] = 0.025
-    plasticity_params["w0_minus"] = 0.
-    experiment_params = [(neuron_params, plasticity_params, simulation_params, bias, alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
-    pool = multiprocessing.Pool(processes=128)
-    results_list = pool.map(get_RF_stats, experiment_params)
-    save_results(results_list, filename='figure_2FG_nlta_00.pickle')
-
-    plasticity_params["add"] = 0
-    plasticity_params["nlta"] = 1
-    plasticity_params["mlt"] = 0
-    plasticity_params["FS"] = 0
-    plasticity_params["mu_plus"] = 0.025
-    plasticity_params["mu_minus"] = 0.025
-    plasticity_params["w0_minus"] = 0.5
-    experiment_params = [(neuron_params, plasticity_params, simulation_params, bias, alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
-    pool = multiprocessing.Pool(processes=128)
-    results_list = pool.map(get_RF_stats, experiment_params)
-    save_results(results_list, filename='figure_2FG_nlta_05.pickle')
-
-    '''
-    plasticity_params["add"] = 0
-    plasticity_params["mlt"] = 0
-    plasticity_params["nlta"] = 1
-    plasticity_params["FS"] = 0
-    plasticity_params["mu_plus"] = 0.075
-    plasticity_params["mu_minus"] = 0.075
-    plasticity_params["w0_minus"] = 0.
-    experiment_params = [(neuron_params, plasticity_params, simulation_params, bias, alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
-    pool = multiprocessing.Pool(processes=128)
-    results_list = pool.map(get_RF_stats, experiment_params)
-    save_results(results_list, filename='figure_2FG_nlta_00_75.pickle')
-
-    plasticity_params["add"] = 0
-    plasticity_params["nlta"] = 1
-    plasticity_params["mlt"] = 0
-    plasticity_params["FS"] = 0
-    plasticity_params["mu_plus"] = 0.075
-    plasticity_params["mu_minus"] = 0.075
-    plasticity_params["w0_minus"] = 0.5
-    experiment_params = [(neuron_params, plasticity_params, simulation_params, bias, alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
-    pool = multiprocessing.Pool(processes=128)
-    results_list = pool.map(get_RF_stats, experiment_params)
-    save_results(results_list, filename='figure_2FG_nlta_05_75.pickle')
-
-    ''''
-
- 
 
     plasticity_params["add"] = 1
     plasticity_params["mlt"] = 0
@@ -609,4 +555,36 @@ if __name__ == '__main__':
     results_list = pool.map(get_RF_stats, experiment_params)
     save_results(results_list, filename='figure_2FG_mlt.pickle')
 
-    '''
+
+    spans = OrderedDict()
+    spans["bias"] =  {"min": 0., "max": 0.05 , "num_values": 2}
+    spans["alpha"] =  {"min": 1., "max": 1.75, "num_values": 10}
+    #spans["c_tot"] =  {"min": 0., "max": 120 , "num_values": 10}
+    spans["c_tot"] =  {"min": 0., "max": 120 , "num_values": 10}
+    for key, value in spans.items():
+        spans[key]["range"] = np.linspace(value["min"], value["max"], value["num_values"])
+    mesh = list(itertools.product(*[span["range"] for span in spans.values()]))
+
+    plasticity_params["add"] = 0
+    plasticity_params["mlt"] = 0
+    plasticity_params["nlta"] = 1
+    plasticity_params["FS"] = 0
+    plasticity_params["mu_plus"] = 0.075
+    plasticity_params["mu_minus"] = 0.075
+    plasticity_params["w0_minus"] = 0.
+    experiment_params = [(neuron_params, plasticity_params, simulation_params, bias, alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
+    pool = multiprocessing.Pool(processes=128)
+    results_list = pool.map(get_RF_stats, experiment_params)
+    save_results(results_list, filename='figure_2FG_nlta_00.pickle')
+
+    plasticity_params["add"] = 0
+    plasticity_params["nlta"] = 1
+    plasticity_params["mlt"] = 0
+    plasticity_params["FS"] = 0
+    plasticity_params["mu_plus"] = 0.075
+    plasticity_params["mu_minus"] = 0.075
+    plasticity_params["w0_minus"] = 0.5
+    experiment_params = [(neuron_params, plasticity_params, simulation_params, bias, alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
+    pool = multiprocessing.Pool(processes=128)
+    results_list = pool.map(get_RF_stats, experiment_params)
+    save_results(results_list, filename='figure_2FG_nlta_05.pickle')

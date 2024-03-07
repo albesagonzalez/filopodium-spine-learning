@@ -102,7 +102,7 @@ def get_overlaps(params):
             overlap_B_av = overlap_B
 
 
-    return w_AB, overlap_A/num_seeds, overlap_B/num_seeds
+    return w_AB, overlap_A_av/num_seeds, overlap_B_av/num_seeds
 
 
 
@@ -148,7 +148,7 @@ if __name__ == "__main__":
 
     #define network architecture and simulation specs
     simulation_params = {}
-    simulation_params["total_time"] = 150*second
+    simulation_params["total_time"] = 200*second
     simulation_params["integration_dt"] = 0.5*ms
     simulation_params["input_dt"] = 1*second
     simulation_params["w_recording_dt"] = 1*second
@@ -332,6 +332,7 @@ if __name__ == "__main__":
     ########
     #add-STDP
     ########
+
     spans["mu_spine"] = {"min": 0., "max": 0., "num_values": 1}
     for key, value in spans.items():
         spans[key]["range"] = np.linspace(value["min"], value["max"], value["num_values"])
