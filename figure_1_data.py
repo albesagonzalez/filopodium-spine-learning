@@ -15,6 +15,8 @@ make_data_dir()
 
 def run_simulation_1(pattern, filename):
 
+
+
     patterns = []
     current_time = 0*second
     c = pattern["c"]
@@ -42,12 +44,10 @@ def run_simulation_1(pattern, filename):
 
     current_time = 0*second
     A_duration = 400*second
-    #simulation_params["N_pre"] = len(spine_index_FS)
     patterns_sub = []
     pattern = {}
     pattern["start_time"] = current_time
     pattern["duration"] = A_duration
-    #pattern["c"] = c[spine_index_FS]
     pattern["c"] = c
     patterns_sub.append(pattern)
     current_time += pattern["duration"]
@@ -57,7 +57,6 @@ def run_simulation_1(pattern, filename):
 
     plasticity_params["mu_plus"] = np.mean(mu_trajs_FS[spine_index_FS, -1])
     plasticity_params["mu_minus"] = np.mean(mu_trajs_FS[spine_index_FS, -1])
-    print(plasticity_params["mu_minus"])
     plasticity_params["add"] = 0
     plasticity_params["mlt"] = 0
     plasticity_params["nlta"] = 1
@@ -153,26 +152,26 @@ if __name__ == "__main__":
     simulation_params["w"] = 0.3
     simulation_params["seed"] = 0
 
-    c_tot = 60
 
+    #define gaussian correlation structure
+    c_tot = 60
     current_time = 0*second
     max_time = 400*second
     pattern = {}
-
     pattern["start_time"] = current_time
     pattern["duration"] = max_time
-
     c_mu = 0.3
     c_sigma = 0.1
     pattern["c"] = np.clip(c_mu + c_sigma*np.random.randn(1000), 0, None)
     pattern["c"] = pattern["c"]/np.sum(pattern["c"])*c_tot
     run_simulation_1(pattern, filename='figure_1_gaussian.pickle')
 
-
+    #define squared pulse correlation structure
     pattern["c"] = np.zeros((1000))
     pattern["c"][np.arange(400, 600)] = c_tot/200
     run_simulation_1(pattern, filename='figure_1_squared.pickle')
 
+    #define von mises correlation structure
     kappa = 8
     pattern["c"] = get_vm_corr(0, kappa, c_tot)
     corr_matrix = np.zeros((1000, 1000))
@@ -183,7 +182,6 @@ if __name__ == "__main__":
     dir = "Data/figure_corr_heatmap.pickle"
     with open(dir, 'wb') as handle:
         pickle.dump(dict(results), handle, protocol=pickle.HIGHEST_PROTOCOL)
-
     run_simulation_1(pattern, filename='figure_1_von_mises.pickle')
 
 
