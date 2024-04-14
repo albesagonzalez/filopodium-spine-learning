@@ -3,10 +3,14 @@ import seaborn as sns
 from brian2 import *
 import pickle
 
-from aux import make_fig_dirs, get_q_a
+from aux_functions import make_fig_dirs, get_q_a
+
+#create figure directories (if don't exist)
 make_fig_dirs(fig_num='1')
 make_fig_dirs(fig_num='supp')
 
+
+#define plotting variables
 coop_colour = plt.cm.tab20(6)
 comp_colour = plt.cm.tab20(0)
 red = plt.cm.tab20(6)
@@ -16,11 +20,10 @@ filo_colour = plt.cm.tab20(14)
 spine_colour = plt.cm.tab20(8)
 A_colour = spine_colour
 B_colour = plt.cm.tab20(2)
-
-
 plt.rcParams['figure.figsize'] = (6,5)
 
 
+#some aux functions to plot analytical values
 def f_plus_fp(w, mu, alpha, w0_plus, q, a,  **kwargs):
     return np.abs((w0_plus - w - 1e-6))**(mu)
 

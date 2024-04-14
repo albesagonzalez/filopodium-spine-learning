@@ -10,10 +10,12 @@ import matplotlib.cm as cm
 from matplotlib.colors import LinearSegmentedColormap
 import seaborn as sns
 
-from aux import get_vm_corr
+from aux_functions import get_vm_corr
 
-from aux import make_fig_dirs
+#create figure directories (if don't exist)
+from aux_functions import make_fig_dirs
 make_fig_dirs(fig_num='4')
+make_fig_dirs(fig_num='supp')
 
 coop_colour = plt.cm.tab20(6)
 comp_colour = plt.cm.tab20(0)

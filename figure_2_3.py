@@ -10,7 +10,7 @@ from matplotlib.colors import LinearSegmentedColormap
 import seaborn as sns
 from argparse import Namespace
 
-from aux import c_timed_array, get_zero_current, get_vm_corr
+from aux_functions import c_timed_array, get_zero_current, get_vm_corr
 
 from sys import exit
 
@@ -24,7 +24,8 @@ from scipy.stats import vonmises
 from scipy.stats import pearsonr
 
 
-from aux import make_fig_dirs
+#create figure directories (if don't exist)
+from aux_functions import make_fig_dirs
 make_fig_dirs(fig_num='2')
 make_fig_dirs(fig_num='3')
 make_fig_dirs(fig_num='supp')

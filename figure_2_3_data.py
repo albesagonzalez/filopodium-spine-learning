@@ -11,12 +11,14 @@ from matplotlib.colors import LinearSegmentedColormap
 import seaborn as sns
 import random
 
-from aux import c_timed_array, get_zero_current, get_vm_corr, get_dynamical_terms, get_q_a
+from aux_functions import c_timed_array, get_zero_current, get_vm_corr, get_dynamical_terms, get_q_a
 from run_network_functions import run_FS_network
 
 from scipy.stats import pearsonr
 
-from aux import make_data_dir
+from aux_functions import make_data_dir
+
+#create data dir (if doesn't exist)
 make_data_dir()
 
 def save_results(results_list, filename):
@@ -93,9 +95,6 @@ def get_RF_stats(params):
 
     for seed in range(num_seeds):
         simulation_params["seed"] = seed
-        #simulation_params["seed"] = random.randint(0, 100)
-
-
         plasticity_params["alpha"] = alpha
         kappa = 8
 
@@ -268,8 +267,6 @@ if __name__ == '__main__':
     spike_ref_mon, spike_pre_mon, spike_post_mon, w_trajs_FS, mu_trajs_FS, post_mon = run_FS_network(neuron_params, plasticity_params, simulation_params)
     fp_FS, fm_FS, factor_FS, competition_FS, cooperation_FS = get_dynamical_terms(w_trajs_FS, mu_trajs_FS, patterns, neuron_params, plasticity_params, simulation_params)
     w_FS = np.mean(w_trajs_FS[:, -10:], axis=1)
-    #filo_index_FS = np.where(w_FS < plasticity_params["w0_minus"])[0]
-    #spine_index_FS = np.where(w_FS >= plasticity_params["w0_minus"])[0]
 
     filo_index_FS = np.where(w_FS < 0.5)[0]
     spine_index_FS = np.where(w_FS >= 0.5)[0]
@@ -495,7 +492,6 @@ if __name__ == '__main__':
     spans = OrderedDict()
     spans["bias"] =  {"min": 0., "max": 0.05 , "num_values": 1}
     spans["alpha"] =  {"min": 1., "max": 1.75, "num_values": 10}
-    #spans["c_tot"] =  {"min": 0., "max": 120 , "num_values": 10}
     spans["c_tot"] =  {"min": 0., "max": 120 , "num_values": 10}
     for key, value in spans.items():
         spans[key]["range"] = np.linspace(value["min"], value["max"], value["num_values"])
@@ -559,7 +555,6 @@ if __name__ == '__main__':
     spans = OrderedDict()
     spans["bias"] =  {"min": 0., "max": 0.05 , "num_values": 2}
     spans["alpha"] =  {"min": 1., "max": 1.75, "num_values": 10}
-    #spans["c_tot"] =  {"min": 0., "max": 120 , "num_values": 10}
     spans["c_tot"] =  {"min": 0., "max": 120 , "num_values": 10}
     for key, value in spans.items():
         spans[key]["range"] = np.linspace(value["min"], value["max"], value["num_values"])

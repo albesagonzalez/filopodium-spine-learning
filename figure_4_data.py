@@ -6,10 +6,11 @@ from collections import defaultdict, OrderedDict
 import pickle
 from brian2 import *
 
-from aux import c_timed_array, get_zero_current, get_vm_corr, get_q_a
+from aux_functions import c_timed_array, get_zero_current, get_vm_corr, get_q_a
 from run_network_functions import run_FS_network
 
-from aux import make_data_dir
+#create data dir (if doesn't exist)
+from aux_functions import make_data_dir
 make_data_dir()
 
 
