@@ -10,6 +10,6 @@ The repository is structured as follows:
 
 - Figure_X.py reads the generated data and creates the panels of Figure X (and associated supplementary figures) as shown in the paper.
 
-- run_network-functions.py contains the actual model, which is implemented using BRIAN2.
+- run_network_functions.py contains the actual model, which is implemented using BRIAN2.
 
 - filopodium_spine_learning_notebook.ipynb contains a notebook that allows easy interaction with the model, for those interested in playing around with it!
