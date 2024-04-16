@@ -17,6 +17,7 @@ from aux_functions import make_fig_dirs
 make_fig_dirs(fig_num='4')
 make_fig_dirs(fig_num='supp')
 
+#define plotting variables
 coop_colour = plt.cm.tab20(6)
 comp_colour = plt.cm.tab20(0)
 total_colour = plt.cm.tab20(6)
