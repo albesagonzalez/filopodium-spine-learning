@@ -114,7 +114,7 @@ def make_2C(FR, y0):
   plt.xticks([0, 250, 500, 750, 1000], [r"$-\pi$", r"$-\pi/2$", r"$0$",  r"$\pi/2$",  r"$\pi$"], fontsize=18)
   plt.axhline(y0/Hz, xmax=0.5, linestyle='dashed', color='black')
   plt.text(s=r"$y_{pref}$", x=150, y=17, fontsize=22)
-  plt.xlabel(r"$Rotation of Input Corr. $\theta$", fontsize=20)
+  plt.xlabel(r"Rotation of Input Corr. $\theta$", fontsize=20)
   plt.ylabel(R"postsyn. activity $y_\theta$ (Hz)", fontsize=20)
   plt.yticks([0, 5, 10, 15, 20, 25], fontsize=20)
   sns.despine()

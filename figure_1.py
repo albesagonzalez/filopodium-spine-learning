@@ -164,9 +164,12 @@ def make_1E(plasticity_params):
     subax2.plot(w_values, f_plus_values, color='black')
     subax2.axhline(0, color='black', alpha=0.8)
 
-    custom_lines = [Line2D([0], [0], color='black', lw=4, linestyle='dashed'),
-                    Line2D([0], [0], color='black', lw=4)]
-    plt.legend(custom_lines, [r"$\Delta f\;(w)$ (competition)", r"$f_+(w)$ (cooperation)"], fontsize=16, bbox_to_anchor=(0., -0.3, 0.1, 3), frameon=False)
+    custom_lines= [Line2D([0], [0], color='black', lw=4, linestyle='dashed'),
+                    Line2D([0], [0], color='black', lw=4),
+                    Line2D([0], [0], color=filo_colour, lw=4),
+                    Line2D([0], [0], color=spine_colour, lw=4)]
+    plt.legend(custom_lines, [r"$\Delta f\;(w)$ (competition)", r"$f_+(w)$ (cooperation)", r"$\mu$  in [0.01, 0.02]", r"$\mu$  in [0.07, 0.13]"], fontsize=14, bbox_to_anchor=(-0.55, 0, 0.1, 3), frameon=False)
+    
     plt.savefig('Figures/1/PNG/E.png', dpi=300, transparent=True)
     plt.savefig('Figures/1/SVG/E.svg', dpi=300, transparent=True)
 
@@ -318,7 +321,7 @@ def make_supp_6(corr_matrix):
   plt.xticks([0, 500, 1000], fontsize=18)
   plt.yticks([0, 500, 1000], fontsize=18)
   plt.ylabel("Neuron ID", fontsize=20)
-  plt.xlabel(r"Stimulus Orientation $\theta$", fontsize=20)
+  plt.xlabel(r"Rotation of Input Corr. $\theta$", fontsize=20)
   plt.xticks([0, 250, 500, 750, 1000], [r"$-\pi$", r"$-\pi/2$", r"$0$", r"$\pi/2$", r"$\pi$"])
   plt.tight_layout()
   cb = plt.colorbar(ticks=[0, 0.4], shrink=0.7)

@@ -1,5 +1,6 @@
 import itertools
 import multiprocessing
+import argparse
 
 
 from collections import defaultdict, OrderedDict
@@ -108,6 +109,12 @@ def get_overlaps(params):
 
 
 if __name__ == "__main__":
+
+    #parse number of cpu's
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--num_cpu", type=int, help="number of cpu's")
+    args = parser.parse_args()
+    num_cpu = args.num_cpu
 
 
     #define neuron physiological parameters
@@ -325,7 +332,7 @@ if __name__ == "__main__":
     plasticity_params["nlta"] = 0
     plasticity_params["FS"] = 1
     experiment_params = [(neuron_params, plasticity_params, simulation_params, r_pre, mu_spine, alpha, kappa, c_tot, delta_theta, num_seeds) for r_pre, mu_spine, alpha, kappa, c_tot, delta_theta in mesh]
-    pool = multiprocessing.Pool(processes=128)
+    pool = multiprocessing.Pool(processes=num_cpu)
     results_list = pool.map(get_overlaps, experiment_params)
     save_results_overlap(results_list, filename='figure_4_overlap_FS.pickle')
 
@@ -342,6 +349,6 @@ if __name__ == "__main__":
     plasticity_params["add"] = 1
     plasticity_params["mlt"] = 0
     experiment_params = [(neuron_params, plasticity_params, simulation_params, r_pre, mu_spine, alpha, kappa, c_tot, delta_theta, num_seeds) for r_pre, mu_spine, alpha, kappa, c_tot, delta_theta in mesh]
-    pool = multiprocessing.Pool(processes=128)
+    pool = multiprocessing.Pool(processes=num_cpu)
     results_list = pool.map(get_overlaps, experiment_params)
     save_results_overlap(results_list, filename='figure_4_overlap_add.pickle')

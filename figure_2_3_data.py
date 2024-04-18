@@ -1,6 +1,7 @@
 from ctypes.wintypes import COLORREF
 import itertools
 import multiprocessing
+import argparse
 
 from collections import defaultdict, OrderedDict
 import pickle
@@ -181,6 +182,12 @@ def get_square_RFs(params):
 
 
 if __name__ == '__main__':
+
+    #parse number of cpu's
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--num_cpu", type=int, help="number of cpu's")
+    args = parser.parse_args()
+    num_cpu = args.num_cpu
 
     #define neuron physiological parameters
     neuron_params = {}
@@ -506,7 +513,7 @@ if __name__ == '__main__':
     plasticity_params["FS"] = 1
     plasticity_params["mu_minus"] = 0
     experiment_params = [(neuron_params, plasticity_params, simulation_params, bias, alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
-    pool = multiprocessing.Pool(processes=128)
+    pool = multiprocessing.Pool(processes=num_cpu)
     results_list = pool.map(get_RF_stats, experiment_params)
     save_results(results_list, filename='figure_2FG_FS.pickle')
 
@@ -516,7 +523,7 @@ if __name__ == '__main__':
     plasticity_params["nlta"] = 0
     plasticity_params["FS"] = 1
     experiment_params = [(neuron_params, plasticity_params, simulation_params, bias, alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
-    pool = multiprocessing.Pool(processes=128)
+    pool = multiprocessing.Pool(processes=num_cpu)
     results_list = pool.map(get_square_RFs, experiment_params)
     save_results(results_list, filename='figure_2FG_FS_square.pickle')
 
@@ -527,7 +534,7 @@ if __name__ == '__main__':
     plasticity_params["nlta"] = 0
     plasticity_params["FS"] = 0
     experiment_params = [(neuron_params, plasticity_params, simulation_params, bias, alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
-    pool = multiprocessing.Pool(processes=128)
+    pool = multiprocessing.Pool(processes=num_cpu)
     results_list = pool.map(get_RF_stats, experiment_params)
     save_results(results_list, filename='figure_2FG_add.pickle')
 
@@ -537,7 +544,7 @@ if __name__ == '__main__':
     plasticity_params["nlta"] = 0
     plasticity_params["FS"] = 0
     experiment_params = [(neuron_params, plasticity_params, simulation_params, bias, alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
-    pool = multiprocessing.Pool(processes=128)
+    pool = multiprocessing.Pool(processes=num_cpu)
     results_list = pool.map(get_square_RFs, experiment_params)
     save_results(results_list, filename='figure_2FG_add_square.pickle')
 
@@ -547,7 +554,7 @@ if __name__ == '__main__':
     plasticity_params["nlta"] = 0
     plasticity_params["FS"] = 0
     experiment_params = [(neuron_params, plasticity_params, simulation_params, bias,  alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
-    pool = multiprocessing.Pool(processes=128)
+    pool = multiprocessing.Pool(processes=num_cpu)
     results_list = pool.map(get_RF_stats, experiment_params)
     save_results(results_list, filename='figure_2FG_mlt.pickle')
 
@@ -568,7 +575,7 @@ if __name__ == '__main__':
     plasticity_params["mu_minus"] = 0.075
     plasticity_params["w0_minus"] = 0.
     experiment_params = [(neuron_params, plasticity_params, simulation_params, bias, alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
-    pool = multiprocessing.Pool(processes=128)
+    pool = multiprocessing.Pool(processes=num_cpu)
     results_list = pool.map(get_RF_stats, experiment_params)
     save_results(results_list, filename='figure_2FG_nlta_00.pickle')
 
@@ -580,6 +587,6 @@ if __name__ == '__main__':
     plasticity_params["mu_minus"] = 0.075
     plasticity_params["w0_minus"] = 0.5
     experiment_params = [(neuron_params, plasticity_params, simulation_params, bias, alpha, c_tot, num_seeds) for bias, alpha, c_tot in mesh]
-    pool = multiprocessing.Pool(processes=128)
+    pool = multiprocessing.Pool(processes=num_cpu)
     results_list = pool.map(get_RF_stats, experiment_params)
     save_results(results_list, filename='figure_2FG_nlta_05.pickle')
