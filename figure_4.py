@@ -147,8 +147,8 @@ def make_4supp(spine_index_A, spine_index_B, data_FS, data_add):
     fig.text(0.04, 0.5, r'pot./dep. imbalance $\alpha$', va='center', rotation='vertical')
     fig.text(0.5, 0.04, r'total correlation $c_{tot}$', ha='center')
 
-    plt.savefig('Figures/4/SVG/supp4{}.svg'.format(rule+1), dpi=300, transparent=True)
-    plt.savefig('Figures/4/PNG/supp4{}.png'.format(rule+1), dpi=300, transparent=True)
+    plt.savefig('Figures/supp/SVG/{}.svg'.format(rule+13), dpi=300, transparent=True)
+    plt.savefig('Figures/supp/PNG/{}.png'.format(rule+13), dpi=300, transparent=True)
     plt.close()
 
 
