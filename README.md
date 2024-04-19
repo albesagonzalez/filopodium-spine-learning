@@ -13,3 +13,5 @@ The repository is structured as follows:
 - run_network_functions.py contains the actual model, which is implemented using BRIAN2.
 
 - filopodium_spine_learning_notebook.ipynb contains a notebook that allows easy interaction with the model, for those interested in playing around with it!
+
+-Note: figure_1_data.py should take a few minutes. figure_2_3_data.py and figure_4_data.py perform a computationally expensive parameter sweep, and can take up to a few hours to run using 128 CPU's. To run figure_2_3_data.py and figure_4_data.py use pyhton figure_X_data.py --num_cpu 128 (or any other desired number). Simulations in the notebook are the least computationally expensive and the easiest way to start interacting with the model. 
