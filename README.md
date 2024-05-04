@@ -2,7 +2,7 @@
 
 This repository contains the code to reproduce results shown in the paper Learning with Filopodia and Spines (Albesa-González and Clopath, 2023). The paper presents a model of spike-timing-dependent plasticity (STDP) where synapses can follow strongly or weakly competitive dynamics depending on their synaptic state (Filopodium-Spine STDP, FS-STDP).
 
-## Repoistory Structure
+## Repository Structure
 
 The repository is structured as follows:
 
