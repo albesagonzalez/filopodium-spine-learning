@@ -6,7 +6,7 @@ This repository contains the code to reproduce results shown in the paper Learni
 
 The repository is structured as follows:
 
-- Figure_X_data.py runs the simulations necessary to producte Figure X and Supplementary Figures associated to Figure X, and stores the results it the Data folder.
+- Figure_X_data.py runs the simulations necessary to producte Figure X and Supplementary Figures associated to Figure X, and stores the results in the Data folder.
 
 - Figure_X.py reads the generated data and creates the panels of Figure X (and associated supplementary figures) as shown in the paper.
 
